@@ -106,48 +106,45 @@ else:
 	conn.row_factory = lambda cursor, row: row[0]
 	cursor = conn.cursor()
 
-
+def str_to_dt(string):
+	s = string
+	x = datetime(int(s[:4]),int(s[5:-3]),int(s[8:]))
+	return datetime.date(x)
 
 
 def main():
+	print('-----------------------------------------')
 	usercomand = input('1-добавить 2-просмотр 3-удалить базу 5-выход: ')
 	if usercomand == "1":
 		user_name = input('введи имя: ')
-		year = int(input('When is your birthday? [YYYY] '))
-		if len(str(year)) > 4:
-			print('некоректная дата ')
-			year = int(input('When is your birthday? [YYYY] '))
-		month = int(input('When is your birthday? [MM] '))
-		if month > 12 or month < 0:
-			print('некоректная дата ')
-			month = int(input('When is your birthday? [MM] '))
-		day = int(input('When is your birthday? [DD] '))
-		if day > 31 or day < 0:
-			print('некоректная дата ')
-			day = int(input('When is your birthday? [DD] '))
-		date_dr = [(user_name, year, month, day)]
-		cursor.executemany("INSERT INTO dr VALUES (?,?,?,?)", date_dr)
-		conn.commit()
+		date_birthday = input('When is your birthday? [YYYY.MM.DD] ')
+		uc = input('добавить: ' + user_name + ' ' + date_birthday + ": ")
+		if uc == '+':
+			date_dr = [(user_name, date_birthday)]
+			cursor.executemany("INSERT INTO dr VALUES (?,?)", date_dr)
+			conn.commit()
+		elif  uc == '-':
+			main()
+		#if len(str(year)) > 4:
+			#print('некоректная дата ')
+			#date_birthday = datetime(input('When is your birthday? [YYYY.MM.DD] '))
 		main()
 	elif usercomand == '2':
 		cursor.execute('SELECT name FROM dr')
 		results = cursor.fetchall()
 		a = list(results)
-		cursor.execute('SELECT year FROM dr')
+		cursor.execute('SELECT date_birthday FROM dr')
 		results2 = cursor.fetchall()
 		b = list(results2)
-		cursor.execute('SELECT month FROM dr')
-		results3 = cursor.fetchall()
-		c = list(results3)
-		cursor.execute('SELECT day FROM dr')
-		results4 = cursor.fetchall()
-		d = list(results4)
-		id, q, w, e, r = 1, 0, 0, 0, 0
-		for q, w, e, r in zip(range(len(a)), range(len(b)), range(len(c)), range(len(d))):
-			birthday = datetime(int(b[w]),int(c[e]),int(d[r]))
-			print('--------------------------------------')
-			print('человек: ' + str(id) + ' name: ' + a[q] + ' data dr: ' + str(datetime.date(birthday)))
-			print('дней до др: ' + str(calculate_dates(birthday)))
+		mas = list()
+		for item in b:
+			mas.append(str_to_dt(item))
+		id = 1
+		for i, j in zip(range(len(a)), range(len(mas))):
+			print('-----------------------------------------')
+			print('человек: ' + str(id) + ' name: ' + a[i] + ' data dr: ' + str(mas[j]))
+			day_do_dr = calculate_dates(mas[j])
+			print('дней до др: ' + str(day_do_dr))
 			id += 1
 		main()
 	elif  usercomand == '3':
@@ -163,7 +160,7 @@ def main():
 try:
 	# Создание таблицы
 	cursor.execute("""CREATE TABLE dr
-					(name text, year text, month text, day trxt)
+					(name text, date_birthday text)
       			   """)
 	# Сохраняем изменения
 	conn.commit()
