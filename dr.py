@@ -20,6 +20,7 @@ from pyfiglet import Figlet
 import  datetime 
 from datetime import datetime
 import pyAesCrypt
+from operator import itemgetter
 
 
 
@@ -140,11 +141,18 @@ def main():
 		for item in b:
 			mas.append(str_to_dt(item))
 		id = 1
-		for i, j in zip(range(len(a)), range(len(mas))):
-			print('-----------------------------------------')
-			print('человек: ' + str(id) + ' name: ' + a[i] + ' data dr: ' + str(mas[j]))
+		mas2 = list()
+		for j in range(len(mas)):
 			day_do_dr = calculate_dates(mas[j])
-			print('дней до др: ' + str(day_do_dr))
+			mas2.append(day_do_dr)
+		spisok = list()
+		for i, j, e in zip(range(len(a)), range(len(mas)), range(len(mas2))):
+			spisok.append([a[i], mas[j], mas2[e]])
+		spisok = sorted(spisok, key=itemgetter(2))
+		for i in range(len(spisok)):
+			print('-----------------------------------------')
+			print('человек: ' + str(id) + ' name: ' + str(spisok[i][0]) + ' data dr: ' + str(spisok[i][1]))
+			print('дней до др: ' + str(spisok[i][2]))
 			id += 1
 		main()
 	elif  usercomand == '3':
