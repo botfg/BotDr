@@ -114,61 +114,40 @@ def str_to_dt(string):
 
 
 def main():
-
-	cursor.execute('SELECT name FROM dr')
-	results = cursor.fetchall()
-	a = list(results)
-	cursor.execute('SELECT date_birthday FROM dr')
-	results2 = cursor.fetchall()
-	b = list(results2)
-	mas = list()
-	for item in b:
-		mas.append(str_to_dt(item))
-	id = 1
-	mas2 = list()
-	for j in range(len(mas)):
-		day_do_dr = calculate_dates(mas[j])
-		mas2.append(day_do_dr)
-	spisok = list()
-	for i, j, e in zip(range(len(a)), range(len(mas)), range(len(mas2))):
-		spisok.append([a[i], mas[j], mas2[e]])
-	spisok = sorted(spisok, key=itemgetter(2))
-	for i in range(len(spisok)):
-		if spisok[i][2] <= 31:
-			print('-----------------------------------------')
-			print('человек: ' + str(id) + ' name: ' + str(spisok[i][0]) + ' data dr: ' + str(spisok[i][1]))
-			print('дней до др: ' + str(spisok[i][2]))
-			id += 1
-			
 	print('-----------------------------------------')
-	usercomand = input('1-добавить 2-просмотр 3-удалить базу 5-выход: ')
+	usercomand = input('1-добавить 2-просмотр 3-удалить человека 4-удалить всех 5-выход: ')
 	if usercomand == "1":
 		user_name = input('введи имя: ')
 		date_birthday = input('When is your birthday? [YYYY.MM.DD] ')
 		try:
-			year = str_to_dt(date_birthday).year
+			year = str_to_dt(date_birthday)
 		except:
 			print('некоректная дата ')
 			date_birthday = input('When is your birthday? [YYYY.MM.DD] ')
-		try:
-			month = str_to_dt(date_birthday).month
-		except:
-			print('некоректная дата ')
-			date_birthday = input('When is your birthday? [YYYY.MM.DD] ')
-		try:
-			day = str_to_dt(date_birthday).day
-		except:
-			print('некоректная дата ')
-			date_birthday = input('When is your birthday? [YYYY.MM.DD] ')
+
+		# ID
+		cursor.execute('SELECT id FROM dr')
+		results = cursor.fetchall()
+		a = list(results)
+		if len(a) == 0:
+			id = 1 
+		else:
+			id = int(a[-1]) + 1
+
+
+
 		uc = input('добавить: ' + user_name + ' ' + date_birthday + ": ")
 		if uc == '+':
-			date_dr = [(user_name, date_birthday)]
-			cursor.executemany("INSERT INTO dr VALUES (?,?)", date_dr)
+			date_dr = [(id, user_name, date_birthday)]
+			cursor.executemany("INSERT INTO dr VALUES (?,?,?)", date_dr)
 			conn.commit()
 		elif  uc == '-':
 			main()
 		main()
 	elif usercomand == '2':
+		cursor.execute('SELECT id FROM dr')
+		results = cursor.fetchall()
+		a0 = list(results)
 		cursor.execute('SELECT name FROM dr')
 		results = cursor.fetchall()
 		a = list(results)
@@ -178,23 +157,53 @@ def main():
 		mas = list()
 		for item in b:
 			mas.append(str_to_dt(item))
-		id = 1
 		mas2 = list()
 		for j in range(len(mas)):
 			day_do_dr = calculate_dates(mas[j])
 			mas2.append(day_do_dr)
 		spisok = list()
-		for i, j, e in zip(range(len(a)), range(len(mas)), range(len(mas2))):
-			spisok.append([a[i], mas[j], mas2[e]])
-		spisok = sorted(spisok, key=itemgetter(2))
+		for i0, i, j, e in zip(range(len(a0)), range(len(a)), range(len(mas)), range(len(mas2))):
+			spisok.append([a0[i0], a[i], mas[j], mas2[e]])
+		spisok = sorted(spisok, key=itemgetter(3))
 		for i in range(len(spisok)):
 			print('-----------------------------------------')
-			print('человек: ' + str(id) + ' name: ' + str(spisok[i][0]) + ' data dr: ' + str(spisok[i][1]))
-			print('дней до др: ' + str(spisok[i][2]))
-			id += 1
+			print('id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' data dr: ' + str(spisok[i][2]))
+			print('дней до др: ' + str(spisok[i][3]))
 		main()
-	elif  usercomand == '3':
+	elif  usercomand == '4':
 		os.remove(path_db)
+	elif usercomand == '3':
+		cursor.execute('SELECT id FROM dr')
+		results = cursor.fetchall()
+		a0 = list(results)
+		cursor.execute('SELECT name FROM dr')
+		results = cursor.fetchall()
+		a = list(results)
+		cursor.execute('SELECT date_birthday FROM dr')
+		results2 = cursor.fetchall()
+		b = list(results2)
+		mas = list()
+		for item in b:
+			mas.append(str_to_dt(item))
+		mas2 = list()
+		for j in range(len(mas)):
+			day_do_dr = calculate_dates(mas[j])
+			mas2.append(day_do_dr)
+		spisok = list()
+		for i0, i, j, e in zip(range(len(a0)), range(len(a)), range(len(mas)), range(len(mas2))):
+			spisok.append([a0[i0], a[i], mas[j], mas2[e]])
+		spisok = sorted(spisok, key=itemgetter(3))
+		if len(spisok) == 0 or not spisok[i][3] <= 31:
+			print('в этом месяце нет др')
+		for i in range(len(spisok)):
+			print('-----------------------------------------')
+			print('id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' data dr: ' + str(spisok[i][2]))
+			print('дней до др: ' + str(spisok[i][3]))
+		print('-----------------------------------------')
+		uc = input('введи id: ')
+		cursor.execute('DELETE FROM dr WHERE id = ' + uc) 
+		conn.commit()
+		main()
 	elif usercomand == '5':
 		password = '155Vc'
 		password2 = 'Sf5g7'
@@ -203,15 +212,43 @@ def main():
 	else:
 		main()
 
+
+
 try:
 	# Создание таблицы
 	cursor.execute("""CREATE TABLE dr
-					(name text, date_birthday text)
+					(id text, name text, date_birthday text)
       			   """)
 	# Сохраняем изменения
 	conn.commit()
 except:
+	cursor.execute('SELECT id FROM dr')
+	results = cursor.fetchall()
+	a0 = list(results)
+	cursor.execute('SELECT name FROM dr')
+	results = cursor.fetchall()
+	a = list(results)
+	cursor.execute('SELECT date_birthday FROM dr')
+	results2 = cursor.fetchall()
+	b = list(results2)
+	mas = list()
+	for item in b:
+		mas.append(str_to_dt(item))
+	mas2 = list()
+	for j in range(len(mas)):
+		day_do_dr = calculate_dates(mas[j])
+		mas2.append(day_do_dr)
+	spisok = list()
+	for i0, i, j, e in zip(range(len(a0)), range(len(a)), range(len(mas)), range(len(mas2))):
+		spisok.append([a0[i0], a[i], mas[j], mas2[e]])
+	spisok = sorted(spisok, key=itemgetter(3))
+	for i in range(len(spisok)):
+		if spisok[i][3] <= 31:
+			print('в этом месяце др: ')
+			print('id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' data dr: ' + str(spisok[i][2]))
+			print('дней до др: ' + str(spisok[i][3]))
 	main()
+
 
 
 main()
