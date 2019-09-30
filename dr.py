@@ -78,11 +78,11 @@ def calculate_dates(original_date):
 	if date2 < date1:
 		delta1 = datetime(now.year, original_date.month, original_date.day)
 		delta2 = datetime(now.year, original_date.month, original_date.day)
-		days = (max(delta1, delta2) - now).days + 1
+		days = (max(delta1, delta2) - now).days
 	elif date2 > date1:
 		delta1 = datetime(now.year, original_date.month, original_date.day)
 		delta2 = datetime(now.year+1, original_date.month, original_date.day)
-		days = (max(delta1, delta2) - now).days + 1
+		days = (max(delta1, delta2) - now).days
 	return days
 
 
@@ -114,11 +114,52 @@ def str_to_dt(string):
 
 
 def main():
+
+	cursor.execute('SELECT name FROM dr')
+	results = cursor.fetchall()
+	a = list(results)
+	cursor.execute('SELECT date_birthday FROM dr')
+	results2 = cursor.fetchall()
+	b = list(results2)
+	mas = list()
+	for item in b:
+		mas.append(str_to_dt(item))
+	id = 1
+	mas2 = list()
+	for j in range(len(mas)):
+		day_do_dr = calculate_dates(mas[j])
+		mas2.append(day_do_dr)
+	spisok = list()
+	for i, j, e in zip(range(len(a)), range(len(mas)), range(len(mas2))):
+		spisok.append([a[i], mas[j], mas2[e]])
+	spisok = sorted(spisok, key=itemgetter(2))
+	for i in range(len(spisok)):
+		if spisok[i][2] <= 31:
+			print('-----------------------------------------')
+			print('человек: ' + str(id) + ' name: ' + str(spisok[i][0]) + ' data dr: ' + str(spisok[i][1]))
+			print('дней до др: ' + str(spisok[i][2]))
+			id += 1
+			
 	print('-----------------------------------------')
 	usercomand = input('1-добавить 2-просмотр 3-удалить базу 5-выход: ')
 	if usercomand == "1":
 		user_name = input('введи имя: ')
 		date_birthday = input('When is your birthday? [YYYY.MM.DD] ')
+		try:
+			year = str_to_dt(date_birthday).year
+		except:
+			print('некоректная дата ')
+			date_birthday = input('When is your birthday? [YYYY.MM.DD] ')
+		try:
+			month = str_to_dt(date_birthday).month
+		except:
+			print('некоректная дата ')
+			date_birthday = input('When is your birthday? [YYYY.MM.DD] ')
+		try:
+			day = str_to_dt(date_birthday).day
+		except:
+			print('некоректная дата ')
+			date_birthday = input('When is your birthday? [YYYY.MM.DD] ')
 		uc = input('добавить: ' + user_name + ' ' + date_birthday + ": ")
 		if uc == '+':
 			date_dr = [(user_name, date_birthday)]
@@ -126,9 +167,6 @@ def main():
 			conn.commit()
 		elif  uc == '-':
 			main()
-		#if len(str(year)) > 4:
-			#print('некоректная дата ')
-			#date_birthday = datetime(input('When is your birthday? [YYYY.MM.DD] '))
 		main()
 	elif usercomand == '2':
 		cursor.execute('SELECT name FROM dr')
