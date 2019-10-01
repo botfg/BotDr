@@ -22,11 +22,40 @@ from datetime import datetime
 import pyAesCrypt
 from operator import itemgetter
 import getpass
-
+import  hashlib
+import json
 
 
 f = Figlet(font='slant')
 print(f.renderText('Bot DR'))
+
+
+def sha1OfFile(filepath):
+    sha = hashlib.sha3_512()
+    with open(filepath, 'rb') as f:
+        while True:
+            block = f.read(2**10)
+            if not block: break
+            sha.update(block)
+        return sha.hexdigest()
+
+def proverka_db(file):
+    x = sha1OfFile(file)
+    with open('.data.json', encoding = 'UTF-8') as file:
+        data = json.load(file)
+    if x == data:
+        result = 'file not modified'
+    else:
+        result = 'file modified'
+    os.remove('.data.json')
+    return result
+
+
+def make_hdb(file):
+    x = sha1OfFile(file)
+    with open('.data.json', 'w', encoding = 'UTF-8') as file:
+        json.dump(x, file)
+
 
 def crypt(dir, password, password2):
 	x = os.path.isfile(dir)
@@ -49,9 +78,6 @@ def crypt(dir, password, password2):
 	os.remove(dir2)
 
 
-
-
-
 def decrypt(dir, password, password2):
 	x = os.path.isfile(dir)
 	if x is False:
@@ -72,6 +98,7 @@ def decrypt(dir, password, password2):
 	os.remove(dir)
 	os.remove(dir2)
 
+
 def calculate_dates(original_date):
 	now = datetime.now()
 	date1 = datetime(now.year,original_date.month, original_date.day)
@@ -87,13 +114,28 @@ def calculate_dates(original_date):
 	return days + 1
 
 
-
 x1 = os.path.isfile('.database.db')
 x2 = os.path.isfile('.database.db.aes')
 if x1 == False and x2 == True:
 	password = getpass.getpass('password1: ')
 	password2 = getpass.getpass('password2: ')
-	decrypt('.database.db.aes', password, password2)
+	x = os.path.isfile('.data.json.aes')
+	if x is True:
+		try:
+			decrypt('.data.json.aes',password, password2)
+			print(proverka_db('.database.db.aes'))
+		except ValueError:
+			print('Wrong password')
+			password = getpass.getpass('password1: ')
+			password2 = getpass.getpass('password2: ')
+			decrypt('.data.json.aes',password, password2)
+			print(hdb.proverka_db('.database.db.aes'))
+	try:
+		decrypt('.database.db.aes', password, password2)
+	except ValueError:
+			password = getpass.getpass('password1: ')
+			password2 = getpass.getpass('password2: ')
+			decrypt('.database.db.aes', password, password2)
 	name_db = '.database.db'
 	cur_dir = os.getcwd()
 	path_db = os.path.join(cur_dir, name_db)
@@ -108,6 +150,7 @@ else:
 	conn.row_factory = lambda cursor, row: row[0]
 	cursor = conn.cursor()
 
+
 def str_to_dt(string):
 	s = string
 	x = datetime(int(s[:4]),int(s[5:-3]),int(s[8:]))
@@ -119,6 +162,13 @@ def main():
 	usercomand = input('1-Add 2-view 3-remove person 4-delete all 5-edit 6-exit: ')
 	if usercomand == "1":
 		user_name = input('enter name: ')
+		#проверка на повторение
+		cursor.execute('SELECT name FROM dr')
+		results = cursor.fetchall()
+		a = list(results)
+		if user_name in a:
+			print('such name already exists')
+			main()
 		date_birthday = input('When is your birthday? [YYYY.MM.DD] ')
 		try:
 			year = str_to_dt(date_birthday)
@@ -261,18 +311,17 @@ def main():
 		password = getpass.getpass('password1: ')
 		password2 = getpass.getpass('password2: ')
 		crypt('.database.db', password, password2)
+		make_hdb('.database.db.aes')
+		crypt('.data.json', password, password2)
 		sys.exit()
 	else:
 		main()
 
 
-
 try:
-	# Создание таблицы
 	cursor.execute("""CREATE TABLE dr
 					(id text, name text, date_birthday text)
-      			   """)
-	# Сохраняем изменения
+					""")
 	conn.commit()
 except:
 	cursor.execute('SELECT id FROM dr')
@@ -301,7 +350,6 @@ except:
 			print('id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2]))
 			print('days to birthday: ' + str(spisok[i][3]))
 	main()
-
 
 
 main()
