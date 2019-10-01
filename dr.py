@@ -84,15 +84,15 @@ def calculate_dates(original_date):
 		delta1 = datetime(now.year, original_date.month, original_date.day)
 		delta2 = datetime(now.year+1, original_date.month, original_date.day)
 		days = (max(delta1, delta2) - now).days
-	return days
+	return days + 1
 
 
 
 x1 = os.path.isfile('.database.db')
 x2 = os.path.isfile('.database.db.aes')
 if x1 == False and x2 == True:
-	password = getpass.getpass('pass1: ')
-	password2 = getpass.getpass('pass2: ')
+	password = getpass.getpass('password1: ')
+	password2 = getpass.getpass('password2: ')
 	decrypt('.database.db.aes', password, password2)
 	name_db = '.database.db'
 	cur_dir = os.getcwd()
@@ -116,14 +116,14 @@ def str_to_dt(string):
 
 def main():
 	print('-----------------------------------------')
-	usercomand = input('1-Add 2-просмотр 3-удалить человека 4-удалить всех 5-редактировать 6-выход: ')
+	usercomand = input('1-Add 2-view 3-remove person 4-delete all 5-edit 6-exit: ')
 	if usercomand == "1":
-		user_name = input('введи имя: ')
+		user_name = input('enter name: ')
 		date_birthday = input('When is your birthday? [YYYY.MM.DD] ')
 		try:
 			year = str_to_dt(date_birthday)
 		except:
-			print('некоректная дата ')
+			print('incorrect date')
 			date_birthday = input('When is your birthday? [YYYY.MM.DD] ')
 		# ID
 		cursor.execute('SELECT id FROM dr')
@@ -133,7 +133,7 @@ def main():
 			id = 1 
 		else:
 			id = int(a[-1]) + 1
-		uc = input('добавить: ' + user_name + ' ' + date_birthday + ": ")
+		uc = input('- no add  + add: ' + user_name + ' ' + date_birthday + ": ")
 		if uc == '+':
 			date_dr = [(id, user_name, date_birthday)]
 			cursor.executemany("INSERT INTO dr VALUES (?,?,?)", date_dr)
@@ -164,8 +164,8 @@ def main():
 		spisok = sorted(spisok, key=itemgetter(3))
 		for i in range(len(spisok)):
 			print('-----------------------------------------')
-			print('id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' data dr: ' + str(spisok[i][2]))
-			print('дней до др: ' + str(spisok[i][3]))
+			print('id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2]))
+			print('days to birthday: ' + str(spisok[i][3]))
 		main()
 	elif  usercomand == '4':
 		os.remove(path_db)
@@ -190,14 +190,12 @@ def main():
 		for i0, i, j, e in zip(range(len(a0)), range(len(a)), range(len(mas)), range(len(mas2))):
 			spisok.append([a0[i0], a[i], mas[j], mas2[e]])
 		spisok = sorted(spisok, key=itemgetter(3))
-		if len(spisok) == 0 or not spisok[i][3] <= 31:
-			print('в этом месяце нет др')
 		for i in range(len(spisok)):
 			print('-----------------------------------------')
-			print('id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' data dr: ' + str(spisok[i][2]))
-			print('дней до др: ' + str(spisok[i][3]))
+			print('id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2]))
+			print('days to birthday: ' + str(spisok[i][3]))
 		print('-----------------------------------------')
-		uc = input('введи id: ')
+		uc = input('enter id: ')
 		cursor.execute('DELETE FROM dr WHERE id = ' + uc) 
 		conn.commit()
 		main()
@@ -224,20 +222,20 @@ def main():
 		spisok = sorted(spisok, key=itemgetter(3))
 		for i in range(len(spisok)):
 			print('-----------------------------------------')
-			print('id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' data dr: ' + str(spisok[i][2]))
-			print('дней до др: ' + str(spisok[i][3]))
+			print('id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2]))
+			print('days to birthday: ' + str(spisok[i][3]))
 		print('-----------------------------------------')
-		uc_id = input('введи id: ')
+		uc_id = input('enter id: ')
 		for i in range(len(spisok)):
 			if spisok[i][0] == int(uc_id):
 				k = i
 		print('')
-		print('id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' data dr: ' + str(spisok[i][2]))
+		print('id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2]))
 		print('')
-		uc = input('1-изменить имя 2-изменить дату: ')
+		uc = input('1-edit name 2-edit date: ')
 		if uc == '1':
-			user_name = input('введи новое имя: ')
-			uc = input('добавить: ' + user_name + ' ' + str(spisok[i][2]) + ": ")
+			user_name = input('enter new name: ')
+			uc = input('- no add  + add: ' + user_name + ' ' + str(spisok[i][2]) + ": ")
 			if uc == '+':
 				cursor.execute('DELETE FROM dr WHERE id = ' + uc_id)
 				date_dr = [(spisok[i][0], user_name, spisok[i][2])]
@@ -248,20 +246,20 @@ def main():
 			try:
 				year = str_to_dt(date_birthday)
 			except:
-				print('некоректная дата ')
+				print('incorrect date')
 				date_birthday = input('When is your birthday? [YYYY.MM.DD] ')
-			uc = input('- no add  + добавить: ' + spisok[i][1] + ' ' + date_birthday + ": ")
+			uc = input('- no add  + add: ' + spisok[i][1] + ' ' + date_birthday + ": ")
 			if uc == '+':
 				cursor.execute('DELETE FROM dr WHERE id = ' + uc_id)
 				date_dr = [(spisok[i][0], spisok[i][1], date_birthday)]
 				cursor.executemany("INSERT INTO dr VALUES (?,?,?)", date_dr)
 				conn.commit()
 		else:
-			print('неверная команда')
+			print('wrong command')
 		main()
 	elif usercomand == '6':
-		password = getpass.getpass('pass1: ')
-		password2 = getpass.getpass('pass2: ')
+		password = getpass.getpass('password1: ')
+		password2 = getpass.getpass('password2: ')
 		crypt('.database.db', password, password2)
 		sys.exit()
 	else:
@@ -299,9 +297,9 @@ except:
 	spisok = sorted(spisok, key=itemgetter(3))
 	for i in range(len(spisok)):
 		if spisok[i][3] <= 31:
-			print('в этом месяце др: ')
-			print('id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' data dr: ' + str(spisok[i][2]))
-			print('дней до др: ' + str(spisok[i][3]))
+			print('this month birthday: ')
+			print('id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2]))
+			print('days to birthday: ' + str(spisok[i][3]))
 	main()
 
 
