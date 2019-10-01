@@ -21,6 +21,7 @@ import  datetime
 from datetime import datetime
 import pyAesCrypt
 from operator import itemgetter
+import getpass
 
 
 
@@ -90,8 +91,8 @@ def calculate_dates(original_date):
 x1 = os.path.isfile('.database.db')
 x2 = os.path.isfile('.database.db.aes')
 if x1 == False and x2 == True:
-	password = '155Vc'
-	password2 = 'Sf5g7'
+	password = getpass.getpass('pass1: ')
+	password2 = getpass.getpass('pass2: ')
 	decrypt('.database.db.aes', password, password2)
 	name_db = '.database.db'
 	cur_dir = os.getcwd()
@@ -115,7 +116,7 @@ def str_to_dt(string):
 
 def main():
 	print('-----------------------------------------')
-	usercomand = input('1-добавить 2-просмотр 3-удалить человека 4-удалить всех 5-выход: ')
+	usercomand = input('1-Add 2-просмотр 3-удалить человека 4-удалить всех 5-редактировать 6-выход: ')
 	if usercomand == "1":
 		user_name = input('введи имя: ')
 		date_birthday = input('When is your birthday? [YYYY.MM.DD] ')
@@ -124,7 +125,6 @@ def main():
 		except:
 			print('некоректная дата ')
 			date_birthday = input('When is your birthday? [YYYY.MM.DD] ')
-
 		# ID
 		cursor.execute('SELECT id FROM dr')
 		results = cursor.fetchall()
@@ -133,9 +133,6 @@ def main():
 			id = 1 
 		else:
 			id = int(a[-1]) + 1
-
-
-
 		uc = input('добавить: ' + user_name + ' ' + date_birthday + ": ")
 		if uc == '+':
 			date_dr = [(id, user_name, date_birthday)]
@@ -204,9 +201,67 @@ def main():
 		cursor.execute('DELETE FROM dr WHERE id = ' + uc) 
 		conn.commit()
 		main()
-	elif usercomand == '5':
-		password = '155Vc'
-		password2 = 'Sf5g7'
+	elif  usercomand == '5':
+		cursor.execute('SELECT id FROM dr')
+		results = cursor.fetchall()
+		a0 = list(results)
+		cursor.execute('SELECT name FROM dr')
+		results = cursor.fetchall()
+		a = list(results)
+		cursor.execute('SELECT date_birthday FROM dr')
+		results2 = cursor.fetchall()
+		b = list(results2)
+		mas = list()
+		for item in b:
+			mas.append(str_to_dt(item))
+		mas2 = list()
+		for j in range(len(mas)):
+			day_do_dr = calculate_dates(mas[j])
+			mas2.append(day_do_dr)
+		spisok = list()
+		for i0, i, j, e in zip(range(len(a0)), range(len(a)), range(len(mas)), range(len(mas2))):
+			spisok.append([a0[i0], a[i], mas[j], mas2[e]])
+		spisok = sorted(spisok, key=itemgetter(3))
+		for i in range(len(spisok)):
+			print('-----------------------------------------')
+			print('id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' data dr: ' + str(spisok[i][2]))
+			print('дней до др: ' + str(spisok[i][3]))
+		print('-----------------------------------------')
+		uc_id = input('введи id: ')
+		for i in range(len(spisok)):
+			if spisok[i][0] == int(uc_id):
+				k = i
+		print('')
+		print('id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' data dr: ' + str(spisok[i][2]))
+		print('')
+		uc = input('1-изменить имя 2-изменить дату: ')
+		if uc == '1':
+			user_name = input('введи новое имя: ')
+			uc = input('добавить: ' + user_name + ' ' + str(spisok[i][2]) + ": ")
+			if uc == '+':
+				cursor.execute('DELETE FROM dr WHERE id = ' + uc_id)
+				date_dr = [(spisok[i][0], user_name, spisok[i][2])]
+				cursor.executemany("INSERT INTO dr VALUES (?,?,?)", date_dr)
+				conn.commit()
+		elif uc == '2':
+			date_birthday = input('When is your birthday? [YYYY.MM.DD] ')
+			try:
+				year = str_to_dt(date_birthday)
+			except:
+				print('некоректная дата ')
+				date_birthday = input('When is your birthday? [YYYY.MM.DD] ')
+			uc = input('- no add  + добавить: ' + spisok[i][1] + ' ' + date_birthday + ": ")
+			if uc == '+':
+				cursor.execute('DELETE FROM dr WHERE id = ' + uc_id)
+				date_dr = [(spisok[i][0], spisok[i][1], date_birthday)]
+				cursor.executemany("INSERT INTO dr VALUES (?,?,?)", date_dr)
+				conn.commit()
+		else:
+			print('неверная команда')
+		main()
+	elif usercomand == '6':
+		password = getpass.getpass('pass1: ')
+		password2 = getpass.getpass('pass2: ')
 		crypt('.database.db', password, password2)
 		sys.exit()
 	else:
