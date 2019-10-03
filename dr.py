@@ -1,3 +1,4 @@
+
 #==============================================================================
 # Copyright 2019 Nikolai Bartenev. Contacts: botfgbartenevfgzero76@gmail.com
 #
@@ -24,6 +25,10 @@ from operator import itemgetter
 import getpass
 import  hashlib
 import json
+from cryptography.fernet import Fernet
+
+cipher_key = b'mWvr6lMjq-o_FwHHCHmBmET99kSk7w8AqVJjapBe2zg='
+cipher = Fernet(cipher_key)
 
 
 f = Figlet(font='slant')
@@ -78,7 +83,7 @@ def crypt(dir, password, password2):
 	os.remove(dir2)
 
 
-def decrypt(dir, password, password2):
+def decrypt2(dir, password, password2):
 	x = os.path.isfile(dir)
 	if x is False:
 		print('No such file or directory')
@@ -122,20 +127,20 @@ if x1 == False and x2 == True:
 	x = os.path.isfile('.data.json.aes')
 	if x is True:
 		try:
-			decrypt('.data.json.aes',password, password2)
+			decrypt2('.data.json.aes',password, password2)
 			print(proverka_db('.database.db.aes'))
 		except ValueError:
 			print('Wrong password')
 			password = getpass.getpass('password1: ')
 			password2 = getpass.getpass('password2: ')
-			decrypt('.data.json.aes',password, password2)
+			decrypt2('.data.json.aes',password, password2)
 			print(hdb.proverka_db('.database.db.aes'))
 	try:
-		decrypt('.database.db.aes', password, password2)
+		decrypt2('.database.db.aes', password, password2)
 	except ValueError:
 			password = getpass.getpass('password1: ')
 			password2 = getpass.getpass('password2: ')
-			decrypt('.database.db.aes', password, password2)
+			decrypt2('.database.db.aes', password, password2)
 	name_db = '.database.db'
 	cur_dir = os.getcwd()
 	path_db = os.path.join(cur_dir, name_db)
@@ -151,13 +156,52 @@ else:
 	cursor = conn.cursor()
 
 
+cursor.execute("""CREATE TABLE IF NOT EXISTS dr
+				(id INTEGER, name TEXT, date_birthday TEXT)
+				""")
+conn.commit()
+
+
 def str_to_dt(string):
 	s = string
 	x = datetime(int(s[:4]),int(s[5:-3]),int(s[8:]))
 	return datetime.date(x)
 
+def str_to_fernet(string):
+	x = string.encode('UTF-8')
+	encrypted_text = cipher.encrypt(x)
+	return encrypted_text
+
+
 
 def main():
+	#soon dr
+	cursor.execute('SELECT id FROM dr')
+	results = cursor.fetchall()
+	a0 = list(results)
+	cursor.execute('SELECT name FROM dr')
+	results = cursor.fetchall()
+	a = list(results)
+	cursor.execute('SELECT date_birthday FROM dr')
+	results2 = cursor.fetchall()
+	b = list(results2)
+	mas = list()
+	for item in b:
+		mas.append(str_to_dt(cipher.decrypt(item)))
+	mas2 = list()
+	for j in range(len(mas)):
+		day_do_dr = calculate_dates(mas[j])
+		mas2.append(day_do_dr)
+	spisok = list()
+	for i0, i, j, e in zip(range(len(a0)), range(len(a)), range(len(mas)), range(len(mas2))):
+		spisok.append([a0[i0], cipher.decrypt(a[i]).decode(), mas[j], mas2[e]])
+	spisok = sorted(spisok, key=itemgetter(3))
+	for i in range(len(spisok)):
+		if spisok[i][3] <= 31:
+			print('this month birthday: ')
+			print('id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2]))
+			print('days to birthday: ' + str(spisok[i][3]))
+	#end soon dr
 	print('-----------------------------------------')
 	usercomand = input('1-Add 2-view 3-remove person 4-delete all 5-edit 6-exit: ')
 	if usercomand == "1":
@@ -169,12 +213,14 @@ def main():
 		if user_name in a:
 			print('such name already exists')
 			main()
+		user_name_a = str_to_fernet(user_name)
 		date_birthday = input('When is your birthday? [YYYY.MM.DD] ')
 		try:
 			year = str_to_dt(date_birthday)
 		except:
 			print('incorrect date')
 			date_birthday = input('When is your birthday? [YYYY.MM.DD] ')
+		date_birthday_a = str_to_fernet(date_birthday)
 		# ID
 		cursor.execute('SELECT id FROM dr')
 		results = cursor.fetchall()
@@ -182,10 +228,10 @@ def main():
 		if len(a) == 0:
 			id = 1 
 		else:
-			id = int(a[-1]) + 1
+			id = a[-1] + 1
 		uc = input('- no add  + add: ' + user_name + ' ' + date_birthday + ": ")
 		if uc == '+':
-			date_dr = [(id, user_name, date_birthday)]
+			date_dr = [(id, user_name_a, date_birthday_a)]
 			cursor.executemany("INSERT INTO dr VALUES (?,?,?)", date_dr)
 			conn.commit()
 		elif  uc == '-':
@@ -203,14 +249,14 @@ def main():
 		b = list(results2)
 		mas = list()
 		for item in b:
-			mas.append(str_to_dt(item))
+			mas.append(str_to_dt(cipher.decrypt(item)))
 		mas2 = list()
 		for j in range(len(mas)):
 			day_do_dr = calculate_dates(mas[j])
 			mas2.append(day_do_dr)
 		spisok = list()
 		for i0, i, j, e in zip(range(len(a0)), range(len(a)), range(len(mas)), range(len(mas2))):
-			spisok.append([a0[i0], a[i], mas[j], mas2[e]])
+			spisok.append([a0[i0], cipher.decrypt(a[i]).decode(), mas[j], mas2[e]])
 		spisok = sorted(spisok, key=itemgetter(3))
 		for i in range(len(spisok)):
 			print('-----------------------------------------')
@@ -231,14 +277,14 @@ def main():
 		b = list(results2)
 		mas = list()
 		for item in b:
-			mas.append(str_to_dt(item))
+			mas.append(str_to_dt(cipher.decrypt(item)))
 		mas2 = list()
 		for j in range(len(mas)):
 			day_do_dr = calculate_dates(mas[j])
 			mas2.append(day_do_dr)
 		spisok = list()
 		for i0, i, j, e in zip(range(len(a0)), range(len(a)), range(len(mas)), range(len(mas2))):
-			spisok.append([a0[i0], a[i], mas[j], mas2[e]])
+			spisok.append([a0[i0], cipher.decrypt(a[i]).decode(), mas[j], mas2[e]])
 		spisok = sorted(spisok, key=itemgetter(3))
 		for i in range(len(spisok)):
 			print('-----------------------------------------')
@@ -261,14 +307,14 @@ def main():
 		b = list(results2)
 		mas = list()
 		for item in b:
-			mas.append(str_to_dt(item))
+			mas.append(str_to_dt(cipher.decrypt(item)))
 		mas2 = list()
 		for j in range(len(mas)):
 			day_do_dr = calculate_dates(mas[j])
 			mas2.append(day_do_dr)
 		spisok = list()
 		for i0, i, j, e in zip(range(len(a0)), range(len(a)), range(len(mas)), range(len(mas2))):
-			spisok.append([a0[i0], a[i], mas[j], mas2[e]])
+			spisok.append([a0[i0], cipher.decrypt(a[i]).decode(), mas[j], mas2[e]])
 		spisok = sorted(spisok, key=itemgetter(3))
 		for i in range(len(spisok)):
 			print('-----------------------------------------')
@@ -315,41 +361,9 @@ def main():
 		crypt('.data.json', password, password2)
 		sys.exit()
 	else:
+		print('wrong command')
 		main()
 
-
-try:
-	cursor.execute("""CREATE TABLE dr
-					(id text, name text, date_birthday text)
-					""")
-	conn.commit()
-except:
-	cursor.execute('SELECT id FROM dr')
-	results = cursor.fetchall()
-	a0 = list(results)
-	cursor.execute('SELECT name FROM dr')
-	results = cursor.fetchall()
-	a = list(results)
-	cursor.execute('SELECT date_birthday FROM dr')
-	results2 = cursor.fetchall()
-	b = list(results2)
-	mas = list()
-	for item in b:
-		mas.append(str_to_dt(item))
-	mas2 = list()
-	for j in range(len(mas)):
-		day_do_dr = calculate_dates(mas[j])
-		mas2.append(day_do_dr)
-	spisok = list()
-	for i0, i, j, e in zip(range(len(a0)), range(len(a)), range(len(mas)), range(len(mas2))):
-		spisok.append([a0[i0], a[i], mas[j], mas2[e]])
-	spisok = sorted(spisok, key=itemgetter(3))
-	for i in range(len(spisok)):
-		if spisok[i][3] <= 31:
-			print('this month birthday: ')
-			print('id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2]))
-			print('days to birthday: ' + str(spisok[i][3]))
-	main()
 
 
 main()
