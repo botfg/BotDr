@@ -1,4 +1,3 @@
-
 #==============================================================================
 # Copyright 2019 Nikolai Bartenev. Contacts: botfgbartenevfgzero76@gmail.com
 #
@@ -27,7 +26,7 @@ import  hashlib
 import json
 from cryptography.fernet import Fernet
 
-cipher_key = b'mWvr6lMjq-o_FwHHCHmBmET99kSk7w8AqVJjapBe2zg='
+cipher_key = b'lolfygiuhidlf;gh5ivyo5cti4ygucl3og'
 cipher = Fernet(cipher_key)
 
 
