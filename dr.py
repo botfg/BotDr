@@ -19,14 +19,16 @@ import sys
 from pyfiglet import Figlet
 import  datetime 
 from datetime import datetime
+from datetime import date
 import pyAesCrypt
 from operator import itemgetter
 import getpass
 import  hashlib
 import json
 from cryptography.fernet import Fernet
+import statistics
 
-cipher_key = b'lolfygiuhidlf;gh5ivyo5cti4ygucl3og'
+cipher_key = b'mWvr6lMjq-o_FwHHCHmBmET99kSk7w8AqVJjapBe2zg='
 cipher = Fernet(cipher_key)
 
 
@@ -67,17 +69,9 @@ def crypt(dir, password, password2):
 		print('No such file or directory')
 		main()
 	buffer_size = 512 * 2048
-	try:
-		pyAesCrypt.encryptFile(str(dir), str(dir + '.bin'), password, buffer_size)
-	except :
-		print('Error')
-		main()
+	pyAesCrypt.encryptFile(str(dir), str(dir + '.bin'), password, buffer_size)
 	dir2 = dir + '.bin'
-	try:
-		pyAesCrypt.encryptFile(str(dir2), str(dir + '.aes'), password2, buffer_size)
-	except :
-		print('Error')
-		main()
+	pyAesCrypt.encryptFile(str(dir2), str(dir + '.aes'), password2, buffer_size)
 	os.remove(dir)
 	os.remove(dir2)
 
@@ -89,16 +83,8 @@ def decrypt2(dir, password, password2):
 		main()
 	buffer_size = 512 * 2048
 	dir2 = dir[0:-4] + '.bin'
-	try:
-		pyAesCrypt.decryptFile(str(dir), str(dir2), password2, buffer_size)
-	except:
-		print('Error')
-		main()
-	try:
-		pyAesCrypt.decryptFile(str(dir2), str(dir2[0:-4]), password, buffer_size)
-	except:
-		print('Error')
-		main()
+	pyAesCrypt.decryptFile(str(dir), str(dir2), password2, buffer_size)
+	pyAesCrypt.decryptFile(str(dir2), str(dir2[0:-4]), password, buffer_size)
 	os.remove(dir)
 	os.remove(dir2)
 
@@ -118,6 +104,13 @@ def calculate_dates(original_date):
 	return days + 1
 
 
+
+
+def calculate_age(born):
+    today = date.today()
+    return today.year - born.year - ((today.month, today.day) < (born.month, born.day)) + 1
+
+
 x1 = os.path.isfile('.database.db')
 x2 = os.path.isfile('.database.db.aes')
 if x1 == False and x2 == True:
@@ -132,8 +125,15 @@ if x1 == False and x2 == True:
 			print('Wrong password')
 			password = getpass.getpass('password1: ')
 			password2 = getpass.getpass('password2: ')
-			decrypt2('.data.json.aes',password, password2)
-			print(hdb.proverka_db('.database.db.aes'))
+			try:
+				decrypt2('.data.json.aes',password, password2)
+				print(proverka_db('.database.db.aes'))
+			except:
+				print('неверный пароль')
+				password = getpass.getpass('password1: ')
+				password2 = getpass.getpass('password2: ')
+				decrypt2('.data.json.aes',password, password2)
+				print(proverka_db('.database.db.aes'))
 	try:
 		decrypt2('.database.db.aes', password, password2)
 	except ValueError:
@@ -199,10 +199,10 @@ def main():
 		if spisok[i][3] <= 31:
 			print('this month birthday: ')
 			print('id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2]))
-			print('days to birthday: ' + str(spisok[i][3]))
+			print('in ' + str(spisok[i][3]) + ' days it will be ' + str(calculate_age(spisok[i][2])) + ' years')
 	#end soon dr
 	print('-----------------------------------------')
-	usercomand = input('1-Add 2-view 3-remove person 4-delete all 5-edit 6-exit: ')
+	usercomand = input('1-Add 2-view 3-remove person 4-delete all 5-edit 6-exit 7-statistics: ')
 	if usercomand == "1":
 		user_name = input('enter name: ')
 		#проверка на повторение
@@ -260,36 +260,11 @@ def main():
 		for i in range(len(spisok)):
 			print('-----------------------------------------')
 			print('id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2]))
-			print('days to birthday: ' + str(spisok[i][3]))
+			print('in ' + str(spisok[i][3]) + ' days it will be ' + str(calculate_age(spisok[i][2])) + ' years')
 		main()
 	elif  usercomand == '4':
 		os.remove(path_db)
 	elif usercomand == '3':
-		cursor.execute('SELECT id FROM dr')
-		results = cursor.fetchall()
-		a0 = list(results)
-		cursor.execute('SELECT name FROM dr')
-		results = cursor.fetchall()
-		a = list(results)
-		cursor.execute('SELECT date_birthday FROM dr')
-		results2 = cursor.fetchall()
-		b = list(results2)
-		mas = list()
-		for item in b:
-			mas.append(str_to_dt(cipher.decrypt(item)))
-		mas2 = list()
-		for j in range(len(mas)):
-			day_do_dr = calculate_dates(mas[j])
-			mas2.append(day_do_dr)
-		spisok = list()
-		for i0, i, j, e in zip(range(len(a0)), range(len(a)), range(len(mas)), range(len(mas2))):
-			spisok.append([a0[i0], cipher.decrypt(a[i]).decode(), mas[j], mas2[e]])
-		spisok = sorted(spisok, key=itemgetter(3))
-		for i in range(len(spisok)):
-			print('-----------------------------------------')
-			print('id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2]))
-			print('days to birthday: ' + str(spisok[i][3]))
-		print('-----------------------------------------')
 		uc = input('enter id: ')
 		cursor.execute('DELETE FROM dr WHERE id = ' + uc) 
 		conn.commit()
@@ -307,33 +282,26 @@ def main():
 		mas = list()
 		for item in b:
 			mas.append(str_to_dt(cipher.decrypt(item)))
-		mas2 = list()
-		for j in range(len(mas)):
-			day_do_dr = calculate_dates(mas[j])
-			mas2.append(day_do_dr)
 		spisok = list()
-		for i0, i, j, e in zip(range(len(a0)), range(len(a)), range(len(mas)), range(len(mas2))):
-			spisok.append([a0[i0], cipher.decrypt(a[i]).decode(), mas[j], mas2[e]])
-		spisok = sorted(spisok, key=itemgetter(3))
-		for i in range(len(spisok)):
-			print('-----------------------------------------')
-			print('id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2]))
-			print('days to birthday: ' + str(spisok[i][3]))
-		print('-----------------------------------------')
+		for i0, i, j in zip(range(len(a0)), range(len(a)), range(len(mas))):
+			spisok.append([a0[i0], cipher.decrypt(a[i]).decode(), mas[j]])
+		spisok = sorted(spisok, key=itemgetter(0))
 		uc_id = input('enter id: ')
 		for i in range(len(spisok)):
 			if spisok[i][0] == int(uc_id):
 				k = i
-		print('')
-		print('id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2]))
+		print("")
+		print('id: ' + uc_id + ' name: ' + str(spisok[k][1]) + ' date of birth: ' + str(spisok[k][2]))
 		print('')
 		uc = input('1-edit name 2-edit date: ')
 		if uc == '1':
 			user_name = input('enter new name: ')
-			uc = input('- no add  + add: ' + user_name + ' ' + str(spisok[i][2]) + ": ")
+			uc = input('- no add  + add: ' + str(user_name) + ' ' + str(spisok[k][2]) + ": ")
 			if uc == '+':
 				cursor.execute('DELETE FROM dr WHERE id = ' + uc_id)
-				date_dr = [(spisok[i][0], user_name, spisok[i][2])]
+				user_name_a = str_to_fernet(user_name)
+				date_birthday_a = str_to_fernet(str(spisok[k][2]))
+				date_dr = [(uc_id, user_name_a, date_birthday_a)]
 				cursor.executemany("INSERT INTO dr VALUES (?,?,?)", date_dr)
 				conn.commit()
 		elif uc == '2':
@@ -343,10 +311,12 @@ def main():
 			except:
 				print('incorrect date')
 				date_birthday = input('When is your birthday? [YYYY.MM.DD] ')
-			uc = input('- no add  + add: ' + spisok[i][1] + ' ' + date_birthday + ": ")
+			uc = input('- no add  + add: ' + spisok[k][1] + ' ' + date_birthday + ": ")
 			if uc == '+':
 				cursor.execute('DELETE FROM dr WHERE id = ' + uc_id)
-				date_dr = [(spisok[i][0], spisok[i][1], date_birthday)]
+				user_name_a = str_to_fernet(spisok[k][1])
+				date_birthday_a = str_to_fernet(date_birthday)
+				date_dr = [(uc_id, user_name_a, date_birthday_a)]
 				cursor.executemany("INSERT INTO dr VALUES (?,?,?)", date_dr)
 				conn.commit()
 		else:
@@ -359,6 +329,27 @@ def main():
 		make_hdb('.database.db.aes')
 		crypt('.data.json', password, password2)
 		sys.exit()
+	elif usercomand == '7':
+		today = date.today()
+		year = today.year
+		if year % 4 == 0:
+			if year % 100 == 0 and year % 400 != 0:
+				year = 365
+			else:
+				year = 366
+		else:
+			year = 365
+		cursor.execute('SELECT date_birthday FROM dr')
+		results2 = cursor.fetchall()
+		b = list(results2)
+		mas = list()
+		mas_year = list()
+		for item in b:
+			mas_year.append(calculate_age(str_to_dt(cipher.decrypt(item))) -1 )
+		avg  = statistics.mean(mas_year) 
+		print('total people: ' + str(len(b)))
+		print('average age: ' + str(avg))
+		main()
 	else:
 		print('wrong command')
 		main()
