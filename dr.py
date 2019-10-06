@@ -37,30 +37,30 @@ print(f.renderText('Bot DR'))
 
 
 def sha1OfFile(filepath):
-    sha = hashlib.sha3_512()
-    with open(filepath, 'rb') as f:
-        while True:
-            block = f.read(2**10)
-            if not block: break
-            sha.update(block)
-        return sha.hexdigest()
+	sha = hashlib.sha3_512()
+	with open(filepath, 'rb') as f:
+		while True:
+			block = f.read(2**10)
+			if not block: break
+			sha.update(block)
+		return sha.hexdigest()
 
 def proverka_db(file):
-    x = sha1OfFile(file)
-    with open('.data.json', encoding = 'UTF-8') as file:
-        data = json.load(file)
-    if x == data:
-        result = 'file not modified'
-    else:
-        result = 'file modified'
-    os.remove('.data.json')
-    return result
+	x = sha1OfFile(file)
+	with open('.data.json', encoding = 'UTF-8') as file:
+		data = json.load(file)
+	if x == data:
+		result = 'file not modified'
+	else:
+		result = 'file modified'
+	os.remove('.data.json')
+	return result
 
 
 def make_hdb(file):
-    x = sha1OfFile(file)
-    with open('.data.json', 'w', encoding = 'UTF-8') as file:
-        json.dump(x, file)
+	x = sha1OfFile(file)
+	with open('.data.json', 'w', encoding = 'UTF-8') as file:
+		json.dump(x, file)
 
 
 def crypt(dir, password, password2):
@@ -96,19 +96,20 @@ def calculate_dates(original_date):
 	if date2 < date1:
 		delta1 = datetime(now.year, original_date.month, original_date.day)
 		delta2 = datetime(now.year, original_date.month, original_date.day)
-		days = (max(delta1, delta2) - now).days
+		days = (max(delta1, delta2) - now).days + 1
+		return int(days)
 	elif date2 > date1:
 		delta1 = datetime(now.year, original_date.month, original_date.day)
 		delta2 = datetime(now.year+1, original_date.month, original_date.day)
-		days = (max(delta1, delta2) - now).days
-	return days + 1
+		days = (max(delta1, delta2) - now).days + 1
+		return int(days)
 
 
 
 
 def calculate_age(born):
-    today = date.today()
-    return today.year - born.year - ((today.month, today.day) < (born.month, born.day)) + 1
+	today = date.today()
+	return today.year - born.year - ((today.month, today.day) < (born.month, born.day)) + 1
 
 
 x1 = os.path.isfile('.database.db')
@@ -129,7 +130,7 @@ if x1 == False and x2 == True:
 				decrypt2('.data.json.aes',password, password2)
 				print(proverka_db('.database.db.aes'))
 			except:
-				print('неверный пароль')
+				print('Wrong password')
 				password = getpass.getpass('password1: ')
 				password2 = getpass.getpass('password2: ')
 				decrypt2('.data.json.aes',password, password2)
@@ -174,33 +175,6 @@ def str_to_fernet(string):
 
 
 def main():
-	#soon dr
-	cursor.execute('SELECT id FROM dr')
-	results = cursor.fetchall()
-	a0 = list(results)
-	cursor.execute('SELECT name FROM dr')
-	results = cursor.fetchall()
-	a = list(results)
-	cursor.execute('SELECT date_birthday FROM dr')
-	results2 = cursor.fetchall()
-	b = list(results2)
-	mas = list()
-	for item in b:
-		mas.append(str_to_dt(cipher.decrypt(item)))
-	mas2 = list()
-	for j in range(len(mas)):
-		day_do_dr = calculate_dates(mas[j])
-		mas2.append(day_do_dr)
-	spisok = list()
-	for i0, i, j, e in zip(range(len(a0)), range(len(a)), range(len(mas)), range(len(mas2))):
-		spisok.append([a0[i0], cipher.decrypt(a[i]).decode(), mas[j], mas2[e]])
-	spisok = sorted(spisok, key=itemgetter(3))
-	for i in range(len(spisok)):
-		if spisok[i][3] <= 31:
-			print('this month birthday: ')
-			print('id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2]))
-			print('in ' + str(spisok[i][3]) + ' days it will be ' + str(calculate_age(spisok[i][2])) + ' years')
-	#end soon dr
 	print('-----------------------------------------')
 	usercomand = input('1-Add 2-view 3-remove person 4-delete all 5-edit 6-exit 7-statistics: ')
 	if usercomand == "1":
@@ -252,6 +226,8 @@ def main():
 		mas2 = list()
 		for j in range(len(mas)):
 			day_do_dr = calculate_dates(mas[j])
+			if day_do_dr == None:
+				day_do_dr = int(0)
 			mas2.append(day_do_dr)
 		spisok = list()
 		for i0, i, j, e in zip(range(len(a0)), range(len(a)), range(len(mas)), range(len(mas2))):
@@ -346,15 +322,52 @@ def main():
 		mas_year = list()
 		for item in b:
 			mas_year.append(calculate_age(str_to_dt(cipher.decrypt(item))) -1 )
+		dr_in_this_year = 0
+		for i in b:
+			lol = calculate_dates(str_to_dt(cipher.decrypt(i)))
+			if lol == None:
+				lol = int(0)
+			if (year - lol) > lol:
+				dr_in_this_year +=1
 		avg  = statistics.mean(mas_year) 
 		print('total people: ' + str(len(b)))
 		print('average age: ' + str(avg))
+		print("birthdays this year: " + str(dr_in_this_year))
 		main()
 	else:
 		print('wrong command')
 		main()
 
-
-
-main()
+if(__name__ == '__main__'):
+#soon dr
+	cursor.execute('SELECT id FROM dr')
+	results = cursor.fetchall()
+	a0 = list(results)
+	cursor.execute('SELECT name FROM dr')
+	results = cursor.fetchall()
+	a = list(results)
+	cursor.execute('SELECT date_birthday FROM dr')
+	results2 = cursor.fetchall()
+	b = list(results2)
+	mas = list()
+	for item in b:
+		mas.append(str_to_dt(cipher.decrypt(item)))
+	mas2 = list()
+	for j in range(len(mas)):
+		day_do_dr = calculate_dates(mas[j])
+		if day_do_dr == None:
+			day_do_dr = int(0)
+		mas2.append(day_do_dr)
+	spisok = list()
+	for i0, i, j, e in zip(range(len(a0)), range(len(a)), range(len(mas)), range(len(mas2))):
+		spisok.append([a0[i0], cipher.decrypt(a[i]).decode(), mas[j], mas2[e]])
+	spisok = sorted(spisok, key=itemgetter(3))
+	for i in range(len(spisok)):
+		if spisok[i][3] <= 31:
+			print('-----------------------------------------')
+			print('this month birthday: ')
+			print('id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2]))
+			print('in ' + str(spisok[i][3]) + ' days it will be ' + str(calculate_age(spisok[i][2])) + ' years')
+	#end soon dr
+	main()
 
