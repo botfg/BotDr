@@ -239,7 +239,10 @@ def main():
 			print('in ' + str(spisok[i][3]) + ' days it will be ' + str(calculate_age(spisok[i][2])) + ' years')
 		main()
 	elif  usercomand == '4':
-		os.remove(path_db)
+		cursor.execute('DELETE FROM dr')
+		cursor.execute('REINDEX dr')
+		conn.commit()
+		main()
 	elif usercomand == '3':
 		uc = input('enter id: ')
 		cursor.execute('DELETE FROM dr WHERE id = ' + uc) 
