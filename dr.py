@@ -17,9 +17,10 @@ import sqlite3
 import os
 import sys
 from pyfiglet import Figlet
-import  datetime 
+import datetime 
 from datetime import datetime
 from datetime import date
+import calendar
 import pyAesCrypt
 from operator import itemgetter
 import getpass
@@ -175,8 +176,11 @@ def str_to_fernet(string):
 
 
 def main():
-	print('-----------------------------------------')
-	usercomand = input('1-Add 2-view 3-remove person 4-delete all 5-edit 6-exit 7-statistics: ')
+	option_bar = '1-Add 2-view 3-remove person 4-delete all 5-edit 6-exit 7-statistics: '
+	width = len(option_bar) + 1
+	print('-'*int(width))
+	#print('-----------------------------------------')
+	usercomand = input(option_bar)
 	if usercomand == "1":
 		user_name = input('enter name: ')
 		#проверка на повторение
@@ -234,8 +238,10 @@ def main():
 			spisok.append([a0[i0], cipher.decrypt(a[i]).decode(), mas[j], mas2[e]])
 		spisok = sorted(spisok, key=itemgetter(3))
 		for i in range(len(spisok)):
-			print('-----------------------------------------')
-			print('id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2]))
+			xb = 'id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2])
+			width = len(xb)
+			print('-'*int(width))
+			print(xb)
 			print('in ' + str(spisok[i][3]) + ' days it will be ' + str(calculate_age(spisok[i][2])) + ' years')
 		main()
 	elif  usercomand == '4':
@@ -269,9 +275,10 @@ def main():
 		for i in range(len(spisok)):
 			if spisok[i][0] == int(uc_id):
 				k = i
-		print("")
-		print('id: ' + uc_id + ' name: ' + str(spisok[k][1]) + ' date of birth: ' + str(spisok[k][2]))
-		print('')
+		xb = 'id: ' + uc_id + ' name: ' + str(spisok[k][1]) + ' date of birth: ' + str(spisok[k][2])
+		width = len(xb)
+		print('-'*int(width))
+		print(xb)
 		uc = input('1-edit name 2-edit date: ')
 		if uc == '1':
 			user_name = input('enter new name: ')
@@ -365,11 +372,22 @@ if(__name__ == '__main__'):
 	for i0, i, j, e in zip(range(len(a0)), range(len(a)), range(len(mas)), range(len(mas2))):
 		spisok.append([a0[i0], cipher.decrypt(a[i]).decode(), mas[j], mas2[e]])
 	spisok = sorted(spisok, key=itemgetter(3))
+	dr_in_mounth = 0
+	now = datetime.now()
+	mounth = calendar.monthrange(now.year, now.month)[1]
+	for i in b:
+		lol = calculate_dates(str_to_dt(cipher.decrypt(i)))
+		if lol == None:
+			lol = int(0)
+		if (int(mounth) - lol) > lol:
+			dr_in_mounth += 1
+	print('this month birthday: ' + str(dr_in_mounth))
 	for i in range(len(spisok)):
 		if spisok[i][3] <= 31:
-			print('-----------------------------------------')
-			print('this month birthday: ')
-			print('id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2]))
+			xb = 'id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2])
+			width = len(xb)
+			print('-'*int(width))
+			print(xb)
 			print('in ' + str(spisok[i][3]) + ' days it will be ' + str(calculate_age(spisok[i][2])) + ' years')
 	#end soon dr
 	main()
