@@ -1,3 +1,4 @@
+
 #==============================================================================
 # Copyright 2019 Nikolai Bartenev. Contacts: botfgbartenevfgzero76@gmail.com
 #
@@ -55,7 +56,6 @@ def proverka_db(file):
 		result = 'file not modified'
 	else:
 		result = 'file modified'
-	os.remove('.data.json')
 	return result
 
 
@@ -115,28 +115,20 @@ if not x1 and x2:
 		os.remove('.database.db.bin')
 		os.remove('.data.json.bin')
 		sys.exit()
-	x = os.path.isfile('.data.json.bin')
-	if x is True:
-		while True:
-			try:
-				decrypt2('.data.json.bin',password)
-				print(proverka_db('.database.db.bin'))
-			except ValueError:
-				print('Wrong password')
-				print("to reset the password(delete the data) enter: reset pass")
-				password = getpass.getpass('password1: ')
-				if password == "reset pass":
-					os.remove('.database.db.bin', '.data.json.bin')
-					sys.exit()
-			else:
-				break
-	# if .data.json not found
 	while True:
 		try:
-			decrypt2('.database.db.bin', password)
+			decrypt2('.data.json.bin',password)
+			print(proverka_db('.database.db.bin'))
+			decrypt2(".database.db.bin", password)
+			os.remove('.data.json')
 		except ValueError:
 			print('Wrong password')
+			print("to reset the password(delete the data) enter: reset pass")
 			password = getpass.getpass('password1: ')
+			if password == "reset pass":
+				os.remove('.database.db.bin')
+				os.remove('.data.json.bin')
+				sys.exit()
 		else:
 			break
 	name_db = '.database.db'
