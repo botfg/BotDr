@@ -24,7 +24,7 @@ import calendar
 import pyAesCrypt
 from operator import itemgetter
 import getpass
-import  hashlib
+import hashlib
 import json
 from cryptography.fernet import Fernet
 import statistics
@@ -46,6 +46,7 @@ def sha1OfFile(filepath):
 			sha.update(block)
 		return sha.hexdigest()
 
+
 def proverka_db(file):
 	x = sha1OfFile(file)
 	with open('.data.json', encoding = 'UTF-8') as file:
@@ -64,30 +65,24 @@ def make_hdb(file):
 		json.dump(x, file)
 
 
-def crypt(dir, password, password2):
+def crypt(dir, password):
 	x = os.path.isfile(dir)
-	if x == False:
+	if not x:
 		print('No such file or directory')
 		main()
 	buffer_size = 512 * 2048
 	pyAesCrypt.encryptFile(str(dir), str(dir + '.bin'), password, buffer_size)
-	dir2 = dir + '.bin'
-	pyAesCrypt.encryptFile(str(dir2), str(dir + '.aes'), password2, buffer_size)
 	os.remove(dir)
-	os.remove(dir2)
 
 
-def decrypt2(dir, password, password2):
+def decrypt2(dir, password):
 	x = os.path.isfile(dir)
 	if x is False:
 		print('No such file or directory')
 		main()
 	buffer_size = 512 * 2048
-	dir2 = dir[0:-4] + '.bin'
-	pyAesCrypt.decryptFile(str(dir), str(dir2), password2, buffer_size)
-	pyAesCrypt.decryptFile(str(dir2), str(dir2[0:-4]), password, buffer_size)
+	pyAesCrypt.decryptFile(str(dir), str(dir[0:-4]), password, buffer_size)
 	os.remove(dir)
-	os.remove(dir2)
 
 
 def calculate_dates(original_date):
@@ -106,42 +101,44 @@ def calculate_dates(original_date):
 		return int(days)
 
 
-
-
 def calculate_age(born):
 	today = date.today()
 	return today.year - born.year - ((today.month, today.day) < (born.month, born.day)) + 1
 
 
 x1 = os.path.isfile('.database.db')
-x2 = os.path.isfile('.database.db.aes')
-if x1 == False and x2 == True:
+x2 = os.path.isfile('.database.db.bin')
+if not x1 and x2:
+	print("to reset the password(delete the data) enter: reset pass")
 	password = getpass.getpass('password1: ')
-	password2 = getpass.getpass('password2: ')
-	x = os.path.isfile('.data.json.aes')
+	if password == "reset pass":
+		os.remove('.database.db.bin')
+		os.remove('.data.json.bin')
+		sys.exit()
+	x = os.path.isfile('.data.json.bin')
 	if x is True:
+		while True:
+			try:
+				decrypt2('.data.json.bin',password)
+				print(proverka_db('.database.db.bin'))
+			except ValueError:
+				print('Wrong password')
+				print("to reset the password(delete the data) enter: reset pass")
+				password = getpass.getpass('password1: ')
+				if password == "reset pass":
+					os.remove('.database.db.bin', '.data.json.bin')
+					sys.exit()
+			else:
+				break
+	# if .data.json not found
+	while True:
 		try:
-			decrypt2('.data.json.aes',password, password2)
-			print(proverka_db('.database.db.aes'))
+			decrypt2('.database.db.bin', password)
 		except ValueError:
 			print('Wrong password')
 			password = getpass.getpass('password1: ')
-			password2 = getpass.getpass('password2: ')
-			try:
-				decrypt2('.data.json.aes',password, password2)
-				print(proverka_db('.database.db.aes'))
-			except:
-				print('Wrong password')
-				password = getpass.getpass('password1: ')
-				password2 = getpass.getpass('password2: ')
-				decrypt2('.data.json.aes',password, password2)
-				print(proverka_db('.database.db.aes'))
-	try:
-		decrypt2('.database.db.aes', password, password2)
-	except ValueError:
-			password = getpass.getpass('password1: ')
-			password2 = getpass.getpass('password2: ')
-			decrypt2('.database.db.aes', password, password2)
+		else:
+			break
 	name_db = '.database.db'
 	cur_dir = os.getcwd()
 	path_db = os.path.join(cur_dir, name_db)
@@ -168,35 +165,40 @@ def str_to_dt(string):
 	x = datetime(int(s[:4]),int(s[5:-3]),int(s[8:]))
 	return datetime.date(x)
 
+
 def str_to_fernet(string):
 	x = string.encode('UTF-8')
 	encrypted_text = cipher.encrypt(x)
 	return encrypted_text
 
 
-
 def main():
 	option_bar = '1-Add 2-view 3-remove person 4-delete all 5-edit 6-exit 7-statistics: '
 	width = len(option_bar) + 1
 	print('-'*int(width))
-	#print('-----------------------------------------')
 	usercomand = input(option_bar)
 	if usercomand == "1":
 		user_name = input('enter name: ')
-		#проверка на повторение
+		# проверка на повторение
 		cursor.execute('SELECT name FROM dr')
 		results = cursor.fetchall()
 		a = list(results)
-		if user_name in a:
+		mas_d_n = list()
+		for i in a:
+			mas_d_n.append(cipher.decrypt(i).decode())
+		if user_name in mas_d_n:
 			print('such name already exists')
 			main()
 		user_name_a = str_to_fernet(user_name)
-		date_birthday = input('When is your birthday? [YYYY.MM.DD] ')
-		try:
-			year = str_to_dt(date_birthday)
-		except:
-			print('incorrect date')
-			date_birthday = input('When is your birthday? [YYYY.MM.DD] ')
+		date_birthday = input('When is your birthday? [YYYY.MM.DD]: ')
+		while True:
+			try:
+				year = str_to_dt(date_birthday)
+			except:
+				print('incorrect date')
+				date_birthday = input('When is your birthday? [YYYY.MM.DD]: ')
+			else:
+				break
 		date_birthday_a = str_to_fernet(date_birthday)
 		# ID
 		cursor.execute('SELECT id FROM dr')
@@ -222,8 +224,8 @@ def main():
 		results = cursor.fetchall()
 		a = list(results)
 		cursor.execute('SELECT date_birthday FROM dr')
-		results2 = cursor.fetchall()
-		b = list(results2)
+		results = cursor.fetchall()
+		b = list(results)
 		mas = list()
 		for item in b:
 			mas.append(str_to_dt(cipher.decrypt(item)))
@@ -245,9 +247,11 @@ def main():
 			print('in ' + str(spisok[i][3]) + ' days it will be ' + str(calculate_age(spisok[i][2])) + ' years')
 		main()
 	elif  usercomand == '4':
-		cursor.execute('DELETE FROM dr')
-		cursor.execute('REINDEX dr')
-		conn.commit()
+		uc = input("+ yes - no: ")
+		if uc == "+":
+			cursor.execute('DELETE FROM dr')
+			cursor.execute('REINDEX dr')
+			conn.commit()
 		main()
 	elif usercomand == '3':
 		uc = input('enter id: ')
@@ -272,16 +276,38 @@ def main():
 			spisok.append([a0[i0], cipher.decrypt(a[i]).decode(), mas[j]])
 		spisok = sorted(spisok, key=itemgetter(0))
 		uc_id = input('enter id: ')
-		for i in range(len(spisok)):
-			if spisok[i][0] == int(uc_id):
-				k = i
-		xb = 'id: ' + uc_id + ' name: ' + str(spisok[k][1]) + ' date of birth: ' + str(spisok[k][2])
+		while True:
+			try:
+				for i in range(len(spisok)):
+					if spisok[i][0] == int(uc_id):
+						k = i
+				xb = 'id: ' + uc_id + ' name: ' + str(spisok[k][1]) + ' date of birth: ' + str(spisok[k][2])
+			except UnboundLocalError:
+				print("invalid id: no item with id " + uc_id)
+				uc_id = input('enter id: ')
+			except ValueError:
+				print("invalid id: id don't have letters")
+				uc_id = input('enter id: ')
+			else:
+				break
 		width = len(xb)
 		print('-'*int(width))
 		print(xb)
 		uc = input('1-edit name 2-edit date: ')
 		if uc == '1':
-			user_name = input('enter new name: ')
+			while True:		
+				user_name = input('enter new name: ')
+				# проверка на повторение
+				cursor.execute('SELECT name FROM dr')
+				results = cursor.fetchall()
+				a = list(results)
+				mas_d_n = list()
+				for i in a:
+					mas_d_n.append(cipher.decrypt(i).decode())
+				if user_name in mas_d_n:
+					print('such name already exists')
+					continue
+				break
 			uc = input('- no add  + add: ' + str(user_name) + ' ' + str(spisok[k][2]) + ": ")
 			if uc == '+':
 				cursor.execute('DELETE FROM dr WHERE id = ' + uc_id)
@@ -292,11 +318,14 @@ def main():
 				conn.commit()
 		elif uc == '2':
 			date_birthday = input('When is your birthday? [YYYY.MM.DD] ')
-			try:
-				year = str_to_dt(date_birthday)
-			except:
-				print('incorrect date')
-				date_birthday = input('When is your birthday? [YYYY.MM.DD] ')
+			while True:
+				try:
+					year = str_to_dt(date_birthday)
+				except:
+					print('incorrect date')
+					date_birthday = input('When is your birthday? [YYYY.MM.DD] ')
+				else:
+					break
 			uc = input('- no add  + add: ' + spisok[k][1] + ' ' + date_birthday + ": ")
 			if uc == '+':
 				cursor.execute('DELETE FROM dr WHERE id = ' + uc_id)
@@ -305,15 +334,16 @@ def main():
 				date_dr = [(uc_id, user_name_a, date_birthday_a)]
 				cursor.executemany("INSERT INTO dr VALUES (?,?,?)", date_dr)
 				conn.commit()
+			elif uc == '-':
+				main()
 		else:
 			print('wrong command')
 		main()
 	elif usercomand == '6':
 		password = getpass.getpass('password1: ')
-		password2 = getpass.getpass('password2: ')
-		crypt('.database.db', password, password2)
-		make_hdb('.database.db.aes')
-		crypt('.data.json', password, password2)
+		crypt('.database.db', password)
+		make_hdb('.database.db.bin')
+		crypt('.data.json', password)
 		sys.exit()
 	elif usercomand == '7':
 		today = date.today()
@@ -349,7 +379,7 @@ def main():
 		main()
 
 if(__name__ == '__main__'):
-#soon dr
+# soon dr
 	cursor.execute('SELECT id FROM dr')
 	results = cursor.fetchall()
 	a0 = list(results)
@@ -389,6 +419,6 @@ if(__name__ == '__main__'):
 			print('-'*int(width))
 			print(xb)
 			print('in ' + str(spisok[i][3]) + ' days it will be ' + str(calculate_age(spisok[i][2])) + ' years')
-	#end soon dr
+	# end soon dr
 	main()
 
