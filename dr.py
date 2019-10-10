@@ -37,34 +37,6 @@ f = Figlet(font='slant')
 print(f.renderText('Bot DR'))
 
 
-def sha1OfFile(filepath):
-    sha = hashlib.sha3_512()
-    with open(filepath, 'rb') as f:
-        while True:
-            block = f.read(2**10)
-            if not block:
-                break
-            sha.update(block)
-        return sha.hexdigest()
-
-
-def proverka_db(file):
-    x = sha1OfFile(file)
-    with open('.data.json', encoding='UTF-8') as file:
-        data = json.load(file)
-    if x == data:
-        result = 'file not modified'
-    else:
-        result = 'file modified'
-    return result
-
-
-def make_hdb(file):
-    x = sha1OfFile(file)
-    with open('.data.json', 'w', encoding='UTF-8') as file:
-        json.dump(x, file)
-
-
 def crypt(dir, password):
     buffer_size = 512 * 2048
     pyAesCrypt.encryptFile(str(dir), str(dir + '.bin'), password, buffer_size)
@@ -98,71 +70,57 @@ def calculate_age(born):
     return today.year - born.year - ((today.month, today.day) < (born.month, born.day)) + 1
 
 
-x1 = os.path.isfile('.database.db')
-x2 = os.path.isfile('.database.db.bin')
-if not x1 and x2:
-    x3 = os.path.isfile('.data.json.bin')
-    if x3:
-        print("to reset the password(delete the data) enter: reset pass")
-        password = getpass.getpass('password: ')
-        if password == "reset pass":
-            os.remove('.database.db.bin')
-            os.remove('.data.json.bin')
-            sys.exit()
+def vhod():
+    global acount_name, acount_pass, conn, cursor
+    u_a = input('1-make acount 2-sing in: ')
+    if u_a == '1':
+        acount_name = input('login: ')
+        password1 = input('acount pass: ')
+        password2 = input('повтори пароль: ')
         while True:
-            try:
-                decrypt2('.data.json.bin', password)
-                print(proverka_db('.database.db.bin'))
-                decrypt2(".database.db.bin", password)
-                os.remove('.data.json')
-            except ValueError:
-                print('Wrong password')
-                print("to reset the password(delete the data) enter: reset pass")
-                password = getpass.getpass('password: ')
-                if password == "reset pass":
-                    os.remove('.database.db.bin')
-                    os.remove('.data.json.bin')
-                    sys.exit()
-            else:
+            if password1 == password2:
+                acount_pass = password1
                 break
-    elif not x3:
-        print('file containing information about database changes not found!')
-        print("to reset the password(delete the data) enter: reset pass")
-        password = getpass.getpass('password: ')
-        if password == "reset pass":
-            os.remove('.database.db.bin')
-            sys.exit()
-        while True:
-            try:
-                decrypt2(".database.db.bin", password)
-            except ValueError:
-                print('Wrong password')
-                print("to reset the password(delete the data) enter: reset pass")
-                password = getpass.getpass('password: ')
-                if password == "reset pass":
-                    os.remove('.database.db.bin')
-                    sys.exit()
             else:
-                break
-    name_db = '.database.db'
-    cur_dir = os.getcwd()
-    path_db = os.path.join(cur_dir, name_db)
-    conn = sqlite3.connect(path_db)
-    conn.row_factory = lambda cursor, row: row[0]
-    cursor = conn.cursor()
-else:
-    name_db = '.database.db'
-    cur_dir = os.getcwd()
-    path_db = os.path.join(cur_dir, name_db)
-    conn = sqlite3.connect(path_db)
-    conn.row_factory = lambda cursor, row: row[0]
-    cursor = conn.cursor()
-
-
-cursor.execute("""CREATE TABLE IF NOT EXISTS dr
+                print('пароли отличаються')
+                password1 = input('acount pass: ')
+                password2 = input('повтори пароль: ')
+        u_podtver = input('+ add - no add ' + acount_name + ' ' + acount_pass + ' : ')
+        if u_podtver == '-':
+            vhod()
+        if u_podtver == '+':
+            name_db = acount_name + '.db'
+            cur_dir = os.getcwd()
+            path_db = os.path.join(cur_dir, name_db)
+            conn = sqlite3.connect(path_db)
+            conn.row_factory = lambda cursor, row: row[0]
+            cursor = conn.cursor()
+            cursor.execute("""CREATE TABLE dr
 				(id INTEGER, name BLOB, date_birthday BLOB)
 				""")
-conn.commit()
+            conn.commit()
+    elif u_a == '2':
+        acount_name = input('login: ')
+        acount_pass = input('acount pass: ')
+        x1 = os.path.isfile(acount_name + '.db.bin')
+        if not x1:
+            print('данный акаунт не найден')
+            vhod()
+        while True:
+            try:
+                decrypt2(acount_name + '.db.bin', acount_pass)
+            except ValueError:
+                print('wrong password')
+                #print('введи символ ак чтобы выйти в  меню входа')
+                acount_pass = input('acount pass: ')
+            else:
+                break
+        name_db = acount_name + '.db'
+        cur_dir = os.getcwd()
+        path_db = os.path.join(cur_dir, name_db)
+        conn = sqlite3.connect(path_db)
+        conn.row_factory = lambda cursor, row: row[0]
+        cursor = conn.cursor()
 
 
 def str_to_dt(string):
@@ -353,10 +311,7 @@ def main():
             print('wrong command')
         main()
     elif usercomand == '6':
-        password = getpass.getpass('password: ')
-        crypt('.database.db', password)
-        make_hdb('.database.db.bin')
-        crypt('.data.json', password)
+        crypt(acount_name + '.db', acount_pass)
         sys.exit()
     elif usercomand == '7':
         today = date.today()
@@ -393,6 +348,7 @@ def main():
 
 
 if(__name__ == '__main__'):
+    vhod()
     # soon dr
     cursor.execute('SELECT id FROM dr')
     results = cursor.fetchall()
