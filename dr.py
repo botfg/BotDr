@@ -69,19 +69,20 @@ def calculate_age(born):
     today = date.today()
     return today.year - born.year - ((today.month, today.day) < (born.month, born.day)) + 1
 
+
 def proverka_login(login):
     accounts = list()
+    accounts2 = list()
     for file in os.listdir(os.getcwd()):
-        if file.endswith(".bin"):
-            accounts.append(file[:-7])
-            if login in accounts:
-                return 'reiteration'
-    
+        accounts.append(file[:-7])
+        accounts2.append(file[:-3])
+        if login in accounts or accounts2:
+            return 'reiteration'
 
 
 def vhod():
     global acount_name, acount_pass, conn, cursor
-    print('введи EXIT чтобы выйти')
+    #print('введи EXIT чтобы выйти')
     u_a = input('1-sing up 2-sing in: ')
     if u_a == '1':
         acount_name = input('login: ')
@@ -98,7 +99,8 @@ def vhod():
                 print('passwords are different')
                 password1 = input('enter password: ')
                 password2 = input('repeat password: ')
-        u_podtver = input('+ add - no add ' + acount_name + ' ' + acount_pass + ' : ')
+        u_podtver = input('+ add - no add ' + acount_name +
+                          ' ' + acount_pass + ' : ')
         if u_podtver == '-':
             vhod()
         if u_podtver == '+':
@@ -120,7 +122,7 @@ def vhod():
         acount_pass = input('enter password: ')
         x1 = os.path.isfile(acount_name + '.db.bin')
         x2 = os.path.isfile(acount_name + '.db')
-        if not x1 and x2:
+        if not x1 and not x2:
             print('account not found')
             vhod()
         if x1:
@@ -132,6 +134,15 @@ def vhod():
                     acount_pass = input('enter password: ')
                 else:
                     break
+        if x2:
+            name_db = acount_name + '.db'
+            cur_dir = os.getcwd()
+            path_db = os.path.join(cur_dir, name_db)
+            conn = sqlite3.connect(path_db)
+            conn.row_factory = lambda cursor, row: row[0]
+            cursor = conn.cursor()
+
+
         name_db = acount_name + '.db'
         cur_dir = os.getcwd()
         path_db = os.path.join(cur_dir, name_db)
@@ -383,7 +394,8 @@ def main():
             mas2.append(day_do_dr)
         spisok = list()
         for i0, i, j, e in zip(range(len(a0)), range(len(a)), range(len(mas)), range(len(mas2))):
-            spisok.append([a0[i0], cipher.decrypt(a[i]).decode(), mas[j], mas2[e]])
+            spisok.append([a0[i0], cipher.decrypt(
+                a[i]).decode(), mas[j], mas2[e]])
         spisok = sorted(spisok, key=itemgetter(3))
         dr_in_mounth = 0
         now = datetime.now()
