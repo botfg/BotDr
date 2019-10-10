@@ -45,7 +45,7 @@ def crypt(dir, password):
 
 def decrypt2(dir, password):
     buffer_size = 512 * 2048
-    pyAesCrypt.decryptFile(str(dir), str(dir[0:-4]), password, buffer_size)
+    pyAesCrypt.decryptFile(str(dir), str(dir[:-4]), password, buffer_size)
     os.remove(dir)
 
 
@@ -69,22 +69,35 @@ def calculate_age(born):
     today = date.today()
     return today.year - born.year - ((today.month, today.day) < (born.month, born.day)) + 1
 
+def proverka_login(login):
+    accounts = list()
+    for file in os.listdir(os.getcwd()):
+        if file.endswith(".bin"):
+            accounts.append(file[:-7])
+            if login in accounts:
+                return 'reiteration'
+    
+
 
 def vhod():
     global acount_name, acount_pass, conn, cursor
-    u_a = input('1-make acount 2-sing in: ')
+    print('введи EXIT чтобы выйти')
+    u_a = input('1-sing up 2-sing in: ')
     if u_a == '1':
         acount_name = input('login: ')
-        password1 = input('acount pass: ')
-        password2 = input('повтори пароль: ')
+        if proverka_login(acount_name) == 'reiteration':
+            print('уже есть акк с таким именем')
+            vhod()
+        password1 = input('enter password: ')
+        password2 = input('repeat password: ')
         while True:
             if password1 == password2:
                 acount_pass = password1
                 break
             else:
-                print('пароли отличаються')
-                password1 = input('acount pass: ')
-                password2 = input('повтори пароль: ')
+                print('passwords are different')
+                password1 = input('enter password: ')
+                password2 = input('repeat password: ')
         u_podtver = input('+ add - no add ' + acount_name + ' ' + acount_pass + ' : ')
         if u_podtver == '-':
             vhod()
@@ -101,20 +114,24 @@ def vhod():
             conn.commit()
     elif u_a == '2':
         acount_name = input('login: ')
-        acount_pass = input('acount pass: ')
-        x1 = os.path.isfile(acount_name + '.db.bin')
-        if not x1:
-            print('данный акаунт не найден')
+        if proverka_login(acount_name) != 'reiteration':
+            print('account not found')
             vhod()
-        while True:
-            try:
-                decrypt2(acount_name + '.db.bin', acount_pass)
-            except ValueError:
-                print('wrong password')
-                #print('введи символ ак чтобы выйти в  меню входа')
-                acount_pass = input('acount pass: ')
-            else:
-                break
+        acount_pass = input('enter password: ')
+        x1 = os.path.isfile(acount_name + '.db.bin')
+        x2 = os.path.isfile(acount_name + '.db')
+        if not x1 and x2:
+            print('account not found')
+            vhod()
+        if x1:
+            while True:
+                try:
+                    decrypt2(acount_name + '.db.bin', acount_pass)
+                except ValueError:
+                    print('wrong password')
+                    acount_pass = input('enter password: ')
+                else:
+                    break
         name_db = acount_name + '.db'
         cur_dir = os.getcwd()
         path_db = os.path.join(cur_dir, name_db)
@@ -136,7 +153,7 @@ def str_to_fernet(string):
 
 
 def main():
-    option_bar = '1-Add 2-view 3-remove person 4-delete all 5-edit 6-exit 7-statistics: '
+    option_bar = '1-Add 2-view 3-remove person 4-delete all 5-edit 6-statistics 7-sing out 8-exit: '
     width = len(option_bar) + 1
     print('-'*int(width))
     usercomand = input(option_bar)
@@ -310,10 +327,10 @@ def main():
         else:
             print('wrong command')
         main()
-    elif usercomand == '6':
+    elif usercomand == '8':
         crypt(acount_name + '.db', acount_pass)
         sys.exit()
-    elif usercomand == '7':
+    elif usercomand == '6':
         today = date.today()
         year = today.year
         if year % 4 == 0:
@@ -341,6 +358,53 @@ def main():
         print('total people: ' + str(len(b)))
         print('average age: ' + str(avg))
         print("birthdays this year: " + str(dr_in_this_year))
+        main()
+    elif usercomand == '7':
+        crypt(acount_name + '.db', acount_pass)
+        vhod()
+        # soon dr
+        cursor.execute('SELECT id FROM dr')
+        results = cursor.fetchall()
+        a0 = list(results)
+        cursor.execute('SELECT name FROM dr')
+        results = cursor.fetchall()
+        a = list(results)
+        cursor.execute('SELECT date_birthday FROM dr')
+        results2 = cursor.fetchall()
+        b = list(results2)
+        mas = list()
+        for item in b:
+            mas.append(str_to_dt(cipher.decrypt(item)))
+        mas2 = list()
+        for j in range(len(mas)):
+            day_do_dr = calculate_dates(mas[j])
+            if day_do_dr == None:
+                day_do_dr = int(0)
+            mas2.append(day_do_dr)
+        spisok = list()
+        for i0, i, j, e in zip(range(len(a0)), range(len(a)), range(len(mas)), range(len(mas2))):
+            spisok.append([a0[i0], cipher.decrypt(a[i]).decode(), mas[j], mas2[e]])
+        spisok = sorted(spisok, key=itemgetter(3))
+        dr_in_mounth = 0
+        now = datetime.now()
+        mounth = calendar.monthrange(now.year, now.month)[1]
+        for i in b:
+            lol = calculate_dates(str_to_dt(cipher.decrypt(i)))
+            if lol == None:
+                lol = int(0)
+            if (int(mounth) - lol) > lol:
+                dr_in_mounth += 1
+        print('this month birthday: ' + str(dr_in_mounth))
+        for i in range(len(spisok)):
+            if spisok[i][3] <= 31:
+                xb = 'id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i]
+                                                                  [1]) + ' date of birth: ' + str(spisok[i][2])
+                width = len(xb)
+                print('-'*int(width))
+                print(xb)
+                print('in ' + str(spisok[i][3]) + ' days it will be ' +
+                      str(calculate_age(spisok[i][2])) + ' years')
+        # end soon dr
         main()
     else:
         print('wrong command')
