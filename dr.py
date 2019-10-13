@@ -23,18 +23,32 @@ import sqlite3
 import statistics
 import sys
 from datetime import date, datetime
+from hashlib import sha3_512
 from operator import itemgetter
 
+
 import pyAesCrypt
+from argon2 import PasswordHasher
 from cryptography.fernet import Fernet
 from pyfiglet import Figlet
 
+#TODO:
+# улутшить защиту
+# сделать удаление акаунта
 cipher_key = b'oxOj5yx_QAeNmkDokHpdUa8AYfnn8OxZmKkjN93yaZw='
 cipher = Fernet(cipher_key)
 
 
+ph = PasswordHasher()
+
+
 f = Figlet(font='slant')
 print(f.renderText('Bot DR'))
+
+
+def hash_s(string):
+    signature = sha3_512(string.encode()).hexdigest()
+    return signature
 
 
 def crypt(dir, password):
@@ -70,40 +84,66 @@ def calculate_age(born):
     return today.year - born.year - ((today.month, today.day) < (born.month, born.day)) + 1
 
 
-def proverka_login(login):
-    accounts = list()
-    accounts2 = list()
-    for file in os.listdir(os.getcwd()):
-        accounts.append(file[:-7])
-        accounts2.append(file[:-3])
-        if login in accounts or accounts2:
-            return 'reiteration'
-
-
 def vhod():
     global acount_name, acount_pass, conn, cursor
-    #print('введи EXIT чтобы выйти')
-    u_a = input('1-sing up 2-sing in: ')
-    if u_a == '1':
+    x1 = os.path.isfile('database.db.bin')
+    if x1:
+        decrypt2('database.db.bin','testpass')
+    name_db = 'database.db'
+    cur_dir = os.getcwd()
+    path_db = os.path.join(cur_dir, name_db)
+    conn = sqlite3.connect(path_db)
+    conn.row_factory = lambda cursor, row: row[0]
+    cursor = conn.cursor()
+    cursor.execute("""CREATE TABLE IF NOT EXISTS users
+            (id INTEGER, name TEXT, pass TEXT)
+                """)
+    conn.commit()
+    u_a = input('1-sign up 2-sign in 3-exit: ')
+    if u_a == '3':
+        sys.exit()
+    elif u_a == '1':
         acount_name = input('login: ')
-        if proverka_login(acount_name) == 'reiteration':
-            print('уже есть акк с таким именем')
+        cursor.execute('SELECT name FROM users')
+        results = cursor.fetchall()
+        crypt_login = list(results)
+        xxx = 0
+        for i in crypt_login:
+            if hash_s(acount_name) == i:
+                xxx += 1
+        if xxx == 1:
+            print('акаунт существует')
             vhod()
-        password1 = input('enter password: ')
-        password2 = input('repeat password: ')
+        password1 = getpass.getpass('enter password: ')
+        password2 = getpass.getpass('repeat password: ')
         while True:
             if password1 == password2:
                 acount_pass = password1
                 break
             else:
                 print('passwords are different')
-                password1 = input('enter password: ')
-                password2 = input('repeat password: ')
-        u_podtver = input('+ add - no add ' + acount_name +
-                          ' ' + acount_pass + ' : ')
+                password1 = getpass.getpass('enter password: ')
+                password2 = getpass.getpass('repeat password: ')
+        u_podtver = input('+ add - no add ' + acount_name + ': ')
         if u_podtver == '-':
             vhod()
         if u_podtver == '+':
+            # ID
+            cursor.execute('SELECT id FROM users')
+            results = cursor.fetchall()
+            a = list(results)
+            if len(a) == 0:
+                id = 1
+            else:
+                id = a[-1] + 1
+            pass_hash_a = ph.hash(acount_pass)
+            tr = hash_s(acount_name)
+            users_data = [(id, tr, pass_hash_a)]
+            cursor.executemany("INSERT INTO users VALUES (?,?,?)", users_data)
+            conn.commit()
+            cursor.close()
+            conn.close()
+            # make users db
             name_db = acount_name + '.db'
             cur_dir = os.getcwd()
             path_db = os.path.join(cur_dir, name_db)
@@ -111,44 +151,85 @@ def vhod():
             conn.row_factory = lambda cursor, row: row[0]
             cursor = conn.cursor()
             cursor.execute("""CREATE TABLE dr
-				(id INTEGER, name BLOB, date_birthday BLOB)
-				""")
+                (id INTEGER, name TEXT, date_birthday TEXT)
+                    """)
             conn.commit()
     elif u_a == '2':
+        name_db = 'database.db'
+        cur_dir = os.getcwd()
+        path_db = os.path.join(cur_dir, name_db)
+        conn = sqlite3.connect(path_db)
+        conn.row_factory = lambda cursor, row: row[0]
+        cursor = conn.cursor()
         acount_name = input('login: ')
-        if proverka_login(acount_name) != 'reiteration':
-            print('account not found')
+        cursor.execute('SELECT name FROM users')
+        results = cursor.fetchall()
+        crypt_login = list(results)
+        xxx = 0
+        for i in crypt_login:
+            if hash_s(acount_name) == i:
+                xxx += 1
+        if xxx == 0:
+            print('акаунта не существует')
             vhod()
-        acount_pass = input('enter password: ')
         x1 = os.path.isfile(acount_name + '.db.bin')
         x2 = os.path.isfile(acount_name + '.db')
-        if not x1 and not x2:
-            print('account not found')
-            vhod()
         if x1:
+            acount_name_h = str(hash_s(acount_name))
+            t = (acount_name_h,)
+            cursor.execute('SELECT pass FROM users WHERE name = ?', t)
+            results = cursor.fetchone()
+            agony_pass = results
+            acount_pass = getpass.getpass('enter password: ')
             while True:
                 try:
-                    decrypt2(acount_name + '.db.bin', acount_pass)
-                except ValueError:
-                    print('wrong password')
-                    acount_pass = input('enter password: ')
+                    ph.verify(agony_pass, acount_pass)
+                except:
+                    print('неверный пароль')
+                    acount_pass = getpass.getpass('enter password: ')
                 else:
                     break
-        if x2:
+            cursor.close()
+            conn.close()
+            decrypt2(acount_name + '.db.bin', acount_pass)
             name_db = acount_name + '.db'
             cur_dir = os.getcwd()
             path_db = os.path.join(cur_dir, name_db)
             conn = sqlite3.connect(path_db)
             conn.row_factory = lambda cursor, row: row[0]
             cursor = conn.cursor()
-
-
+        elif x2:
+            name_db = 'database.db'
+            cur_dir = os.getcwd()
+            path_db = os.path.join(cur_dir, name_db)
+            conn = sqlite3.connect(path_db)
+            conn.row_factory = lambda cursor, row: row[0]
+            cursor = conn.cursor()
+            acount_name_h = str(hash_s(acount_name))
+            t = (acount_name_h,)
+            cursor.execute('SELECT pass FROM users WHERE name = ?', t)
+            results = cursor.fetchone()
+            agony_pass = results
+            acount_pass = getpass.getpass('enter password: ')
+            while True:
+                try:
+                    ph.verify(agony_pass, acount_pass)
+                except:
+                    print('неверный пароль')
+                    acount_pass = getpass.getpass('enter password: ')
+                else:
+                    break
+        cursor.close()
+        conn.close()
         name_db = acount_name + '.db'
         cur_dir = os.getcwd()
         path_db = os.path.join(cur_dir, name_db)
         conn = sqlite3.connect(path_db)
         conn.row_factory = lambda cursor, row: row[0]
         cursor = conn.cursor()
+    else:
+        print('wrong command')
+        vhod()
 
 
 def str_to_dt(string):
@@ -158,13 +239,14 @@ def str_to_dt(string):
 
 
 def str_to_fernet(string):
-    x = string.encode('UTF-8')
+    x = string.encode()
     encrypted_text = cipher.encrypt(x)
     return encrypted_text
 
 
 def main():
-    option_bar = '1-Add 2-view 3-remove person 4-delete all 5-edit 6-statistics 7-sing out 8-exit: '
+    global acount_name, acount_pass, cursor, conn
+    option_bar = '1-Add 2-view 3-remove person 4-delete all person 5-edit 6-statistics 7-sing out 8-delete acount 9-exit: '
     width = len(option_bar) + 1
     print('-'*int(width))
     usercomand = input(option_bar)
@@ -340,7 +422,33 @@ def main():
         main()
     elif usercomand == '8':
         crypt(acount_name + '.db', acount_pass)
-        sys.exit()
+        os.remove(acount_name + '.db.bin')
+        name_db = 'database.db'
+        cur_dir = os.getcwd()
+        path_db = os.path.join(cur_dir, name_db)
+        conn = sqlite3.connect(path_db)
+        conn.row_factory = lambda cursor, row: row[0]
+        cursor = conn.cursor()
+        acount_name_h = str(hash_s(acount_name))
+        t = (acount_name_h,)
+        cursor.execute('SELECT pass FROM users WHERE name = ?', t)
+        results = cursor.fetchone()
+        agony_pass = results
+        acount_pass = getpass.getpass('enter password: ')
+        while True:
+            try:
+                ph.verify(agony_pass, acount_pass)
+            except:
+                print('неверный пароль')
+                acount_pass = getpass.getpass('enter password: ')
+            else:
+                break
+        cursor.execute('DELETE FROM users WHERE name = ?', t)
+        conn.commit()
+        cursor.close()
+        conn.close()
+        crypt('database.db', 'testpass')
+        vhod()
     elif usercomand == '6':
         today = date.today()
         year = today.year
@@ -418,6 +526,10 @@ def main():
                       str(calculate_age(spisok[i][2])) + ' years')
         # end soon dr
         main()
+    elif usercomand == '9':
+        crypt(acount_name + '.db', acount_pass)
+        crypt('database.db', 'testpass')
+        sys.exit()
     else:
         print('wrong command')
         main()
