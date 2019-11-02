@@ -32,9 +32,6 @@ from argon2 import PasswordHasher
 from cryptography.fernet import Fernet
 from pyfiglet import Figlet
 
-#TODO:
-# улутшить защиту
-# сделать удаление акаунта
 cipher_key = b'oxOj5yx_QAeNmkDokHpdUa8AYfnn8OxZmKkjN93yaZw='
 cipher = Fernet(cipher_key)
 
@@ -85,10 +82,10 @@ def calculate_age(born):
 
 
 def vhod():
-    global acount_name, acount_pass, conn, cursor
-    x1 = os.path.isfile('database.db.bin')
-    if x1:
-        decrypt2('database.db.bin','testpass')
+    global account_name, account_pass, conn, cursor
+    db_crypt = os.path.isfile('database.db.bin')
+    if db_crypt:
+        decrypt2('database.db.bin', 'testpass')
     name_db = 'database.db'
     cur_dir = os.getcwd()
     path_db = os.path.join(cur_dir, name_db)
@@ -103,48 +100,47 @@ def vhod():
     if u_a == '3':
         sys.exit()
     elif u_a == '1':
-        acount_name = input('login: ')
+        account_name = input('login: ')
         cursor.execute('SELECT name FROM users')
         results = cursor.fetchall()
         crypt_login = list(results)
-        xxx = 0
+        # check account_existence
         for i in crypt_login:
-            if hash_s(acount_name) == i:
-                xxx += 1
-        if xxx == 1:
-            print('акаунт существует')
-            vhod()
+            if hash_s(account_name) == i:
+                print('account exists')
+                vhod()
+        # end check account_existence
         password1 = getpass.getpass('enter password: ')
         password2 = getpass.getpass('repeat password: ')
         while True:
             if password1 == password2:
-                acount_pass = password1
+                account_pass = password1
                 break
             else:
                 print('passwords are different')
                 password1 = getpass.getpass('enter password: ')
                 password2 = getpass.getpass('repeat password: ')
-        u_podtver = input('+ add - no add ' + acount_name + ': ')
+        u_podtver = input('+ add - no add ' + account_name + ': ')
         if u_podtver == '-':
             vhod()
-        if u_podtver == '+':
+        elif u_podtver == '+':
             # ID
             cursor.execute('SELECT id FROM users')
             results = cursor.fetchall()
-            a = list(results)
-            if len(a) == 0:
+            list_id_from_db = list(results)
+            if len(list_id_from_db) == 0:
                 id = 1
             else:
-                id = a[-1] + 1
-            pass_hash_a = ph.hash(acount_pass)
-            tr = hash_s(acount_name)
+                id = list_id_from_db[-1] + 1
+            pass_hash_a = ph.hash(account_pass)
+            tr = hash_s(account_name)
             users_data = [(id, tr, pass_hash_a)]
             cursor.executemany("INSERT INTO users VALUES (?,?,?)", users_data)
             conn.commit()
             cursor.close()
             conn.close()
             # make users db
-            name_db = acount_name + '.db'
+            name_db = account_name + '.db'
             cur_dir = os.getcwd()
             path_db = os.path.join(cur_dir, name_db)
             conn = sqlite3.connect(path_db)
@@ -161,38 +157,40 @@ def vhod():
         conn = sqlite3.connect(path_db)
         conn.row_factory = lambda cursor, row: row[0]
         cursor = conn.cursor()
-        acount_name = input('login: ')
+        account_name = input('login: ')
         cursor.execute('SELECT name FROM users')
         results = cursor.fetchall()
         crypt_login = list(results)
-        xxx = 0
+        # check account_existence
+        account_existence = 0
         for i in crypt_login:
-            if hash_s(acount_name) == i:
-                xxx += 1
-        if xxx == 0:
-            print('акаунта не существует')
+            if hash_s(account_name) == i:
+                account_existence += 1
+        if account_existence == 0:
+            print('account does not exist')
             vhod()
-        x1 = os.path.isfile(acount_name + '.db.bin')
-        x2 = os.path.isfile(acount_name + '.db')
+        # end account_existence
+        account_pass = getpass.getpass('enter password: ')
+        x1 = os.path.isfile(account_name + '.db.bin')
+        x2 = os.path.isfile(account_name + '.db')
         if x1:
-            acount_name_h = str(hash_s(acount_name))
-            t = (acount_name_h,)
-            cursor.execute('SELECT pass FROM users WHERE name = ?', t)
+            account_name_h = str(hash_s(account_name))
+            execute_arg = (account_name_h,)
+            cursor.execute('SELECT pass FROM users WHERE name = ?', execute_arg)
             results = cursor.fetchone()
             agony_pass = results
-            acount_pass = getpass.getpass('enter password: ')
             while True:
                 try:
-                    ph.verify(agony_pass, acount_pass)
+                    ph.verify(agony_pass, account_pass)
                 except:
-                    print('неверный пароль')
-                    acount_pass = getpass.getpass('enter password: ')
+                    print('Wrong password')
+                    account_pass = getpass.getpass('enter password: ')
                 else:
                     break
             cursor.close()
             conn.close()
-            decrypt2(acount_name + '.db.bin', acount_pass)
-            name_db = acount_name + '.db'
+            decrypt2(account_name + '.db.bin', account_pass)
+            name_db = account_name + '.db'
             cur_dir = os.getcwd()
             path_db = os.path.join(cur_dir, name_db)
             conn = sqlite3.connect(path_db)
@@ -205,23 +203,22 @@ def vhod():
             conn = sqlite3.connect(path_db)
             conn.row_factory = lambda cursor, row: row[0]
             cursor = conn.cursor()
-            acount_name_h = str(hash_s(acount_name))
-            t = (acount_name_h,)
-            cursor.execute('SELECT pass FROM users WHERE name = ?', t)
+            account_name_h = str(hash_s(account_name))
+            execute_arg = (account_name_h,)
+            cursor.execute('SELECT pass FROM users WHERE name = ?', execute_arg)
             results = cursor.fetchone()
             agony_pass = results
-            acount_pass = getpass.getpass('enter password: ')
             while True:
                 try:
-                    ph.verify(agony_pass, acount_pass)
+                    ph.verify(agony_pass, account_pass)
                 except:
-                    print('неверный пароль')
-                    acount_pass = getpass.getpass('enter password: ')
+                    print('Wrong password')
+                    account_pass = getpass.getpass('enter password: ')
                 else:
                     break
         cursor.close()
         conn.close()
-        name_db = acount_name + '.db'
+        name_db = account_name + '.db'
         cur_dir = os.getcwd()
         path_db = os.path.join(cur_dir, name_db)
         conn = sqlite3.connect(path_db)
@@ -233,20 +230,19 @@ def vhod():
 
 
 def str_to_dt(string):
-    s = string
-    x = datetime(int(s[:4]), int(s[5:-3]), int(s[8:]))
+    x = datetime(int(string[:4]), int(string[5:-3]), int(string[8:]))
     return datetime.date(x)
 
 
 def str_to_fernet(string):
-    x = string.encode()
-    encrypted_text = cipher.encrypt(x)
+    string = string.encode()
+    encrypted_text = cipher.encrypt(string)
     return encrypted_text
 
 
 def main():
-    global acount_name, acount_pass, cursor, conn
-    option_bar = '1-Add 2-view 3-remove person 4-delete all person 5-edit 6-statistics 7-sing out 8-delete acount 9-exit: '
+    global account_name, account_pass, cursor, conn
+    option_bar = '1-Add 2-view 3-remove person 4-delete all person 5-edit 6-statistics 7-sing out 8-delete account 9-exit: '
     width = len(option_bar) + 1
     print('-'*int(width))
     usercomand = input(option_bar)
@@ -255,10 +251,8 @@ def main():
         # проверка на повторение
         cursor.execute('SELECT name FROM dr')
         results = cursor.fetchall()
-        a = list(results)
-        mas_d_n = list()
-        for i in a:
-            mas_d_n.append(cipher.decrypt(i).decode())
+        list_name_from_db = list(results)
+        mas_d_n = [cipher.decrypt(x).decode() for x in list_name_from_db]
         if user_name in mas_d_n:
             print('such name already exists')
             main()
@@ -276,11 +270,11 @@ def main():
         # ID
         cursor.execute('SELECT id FROM dr')
         results = cursor.fetchall()
-        a = list(results)
-        if len(a) == 0:
+        list_id_from_db = list(results)
+        if len(list_id_from_db) == 0:
             id = 1
         else:
-            id = a[-1] + 1
+            id = list_id_from_db[-1] + 1
         uc = input('- no add  + add: ' + user_name +
                    ' ' + date_birthday + ": ")
         if uc == '+':
@@ -293,27 +287,16 @@ def main():
     elif usercomand == '2':
         cursor.execute('SELECT id FROM dr')
         results = cursor.fetchall()
-        a0 = list(results)
+        list_id_from_db = list(results)
         cursor.execute('SELECT name FROM dr')
         results = cursor.fetchall()
-        a = list(results)
+        list_name_from_db = list(results)
         cursor.execute('SELECT date_birthday FROM dr')
         results = cursor.fetchall()
-        b = list(results)
-        mas = list()
-        for item in b:
-            mas.append(str_to_dt(cipher.decrypt(item)))
-        mas2 = list()
-        for j in range(len(mas)):
-            day_do_dr = calculate_dates(mas[j])
-            if day_do_dr == None:
-                day_do_dr = int(0)
-            mas2.append(day_do_dr)
-        spisok = list()
-        for i0, i, j, e in zip(range(len(a0)), range(len(a)), range(len(mas)), range(len(mas2))):
-            spisok.append([a0[i0], cipher.decrypt(
-                a[i]).decode(), mas[j], mas2[e]])
-        spisok = sorted(spisok, key=itemgetter(3))
+        list_date_birth_from_db = list(results)
+        list_date_birth = [str_to_dt(cipher.decrypt(item)) for item in list_date_birth_from_db]
+        list_days_to_birth = [calculate_dates(list_date_birth[i]) for i in range(len(list_date_birth))]
+        spisok = sorted([[list_id_from_db[i0], cipher.decrypt(list_name_from_db[i]).decode(), list_date_birth[j], list_days_to_birth[e]] for i0, i, j, e in zip(range(len(list_id_from_db)), range(len(list_name_from_db)), range(len(list_date_birth)), range(len(list_days_to_birth)))], key=itemgetter(3))
         for i in range(len(spisok)):
             xb = 'id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i]
                                                               [1]) + ' date of birth: ' + str(spisok[i][2])
@@ -338,20 +321,16 @@ def main():
     elif usercomand == '5':
         cursor.execute('SELECT id FROM dr')
         results = cursor.fetchall()
-        a0 = list(results)
+        list_id_from_db = list(results)
         cursor.execute('SELECT name FROM dr')
         results = cursor.fetchall()
-        a = list(results)
+        list_name_from_db = list(results)
         cursor.execute('SELECT date_birthday FROM dr')
-        results2 = cursor.fetchall()
-        b = list(results2)
-        mas = list()
-        for item in b:
-            mas.append(str_to_dt(cipher.decrypt(item)))
-        spisok = list()
-        for i0, i, j in zip(range(len(a0)), range(len(a)), range(len(mas))):
-            spisok.append([a0[i0], cipher.decrypt(a[i]).decode(), mas[j]])
-        spisok = sorted(spisok, key=itemgetter(0))
+        results = cursor.fetchall()
+        list_date_birth_from_db = list(results)
+        list_date_birth = [str_to_dt(cipher.decrypt(item)) for item in list_date_birth_from_db]
+        list_days_to_birth = [calculate_dates(list_date_birth[i]) for i in range(len(list_date_birth))]
+        spisok = sorted([[list_id_from_db[i0], cipher.decrypt(list_name_from_db[i]).decode(), list_date_birth[j], list_days_to_birth[e]] for i0, i, j, e in zip(range(len(list_id_from_db)), range(len(list_name_from_db)), range(len(list_date_birth)), range(len(list_days_to_birth)))], key=itemgetter(3))
         uc_id = input('enter id: ')
         while True:
             try:
@@ -364,7 +343,7 @@ def main():
                 print("invalid id: no item with id " + uc_id)
                 uc_id = input('enter id: ')
             except ValueError:
-                print("invalid id: id don't have letters")
+                print("invalid id: id don'execute_arg have letters")
                 uc_id = input('enter id: ')
             else:
                 break
@@ -379,9 +358,7 @@ def main():
                 cursor.execute('SELECT name FROM dr')
                 results = cursor.fetchall()
                 a = list(results)
-                mas_d_n = list()
-                for i in a:
-                    mas_d_n.append(cipher.decrypt(i).decode())
+                mas_d_n = [cipher.decrypt(i).decode() for i in a]
                 if user_name in mas_d_n:
                     print('such name already exists')
                     continue
@@ -408,6 +385,7 @@ def main():
                     break
             uc = input('- no add  + add: ' +
                        spisok[k][1] + ' ' + date_birthday + ": ")
+            #TODO удалить сразу с базы
             if uc == '+':
                 cursor.execute('DELETE FROM dr WHERE id = ' + uc_id)
                 user_name_a = str_to_fernet(spisok[k][1])
@@ -421,29 +399,29 @@ def main():
             print('wrong command')
         main()
     elif usercomand == '8':
-        crypt(acount_name + '.db', acount_pass)
-        os.remove(acount_name + '.db.bin')
+        crypt(account_name + '.db', account_pass)
+        os.remove(account_name + '.db.bin')
         name_db = 'database.db'
         cur_dir = os.getcwd()
         path_db = os.path.join(cur_dir, name_db)
         conn = sqlite3.connect(path_db)
         conn.row_factory = lambda cursor, row: row[0]
         cursor = conn.cursor()
-        acount_name_h = str(hash_s(acount_name))
-        t = (acount_name_h,)
-        cursor.execute('SELECT pass FROM users WHERE name = ?', t)
+        account_name_h = str(hash_s(account_name))
+        cursor.execute('SELECT pass FROM users WHERE name = ?', execute_arg)
         results = cursor.fetchone()
         agony_pass = results
-        acount_pass = getpass.getpass('enter password: ')
+        account_pass = getpass.getpass('enter password: ')
         while True:
             try:
-                ph.verify(agony_pass, acount_pass)
+                ph.verify(agony_pass, account_pass)
             except:
-                print('неверный пароль')
-                acount_pass = getpass.getpass('enter password: ')
+                print('Wrong password')
+                account_pass = getpass.getpass('enter password: ')
             else:
                 break
-        cursor.execute('DELETE FROM users WHERE name = ?', t)
+        execute_arg = (account_name_h,)
+        cursor.execute('DELETE FROM users WHERE name = ?', execute_arg)
         conn.commit()
         cursor.close()
         conn.close()
@@ -461,61 +439,54 @@ def main():
             year = 365
         cursor.execute('SELECT date_birthday FROM dr')
         results2 = cursor.fetchall()
-        b = list(results2)
-        mas = list()
-        mas_year = list()
-        for item in b:
-            mas_year.append(calculate_age(str_to_dt(cipher.decrypt(item))) - 1)
+        list_date_birth_from_db = list(results2)
+        mas_year = [calculate_age(str_to_dt(cipher.decrypt(item))) - 1 for item in list_date_birth_from_db]
         dr_in_this_year = 0
-        for i in b:
+        for i in list_date_birth_from_db:
             lol = calculate_dates(str_to_dt(cipher.decrypt(i)))
             if lol == None:
                 lol = int(0)
             if (year - lol) > lol:
                 dr_in_this_year += 1
         avg = statistics.mean(mas_year)
-        print('total people: ' + str(len(b)))
+        print('total people: ' + str(len(list_date_birth_from_db)))
         print('average age: ' + str(avg))
         print("birthdays this year: " + str(dr_in_this_year))
         main()
     elif usercomand == '7':
-        crypt(acount_name + '.db', acount_pass)
+        crypt(account_name + '.db', account_pass)
         vhod()
         # soon dr
         cursor.execute('SELECT id FROM dr')
         results = cursor.fetchall()
-        a0 = list(results)
+        list_id_from_db = list(results)
         cursor.execute('SELECT name FROM dr')
         results = cursor.fetchall()
-        a = list(results)
+        list_name_from_db = list(results)
         cursor.execute('SELECT date_birthday FROM dr')
-        results2 = cursor.fetchall()
-        b = list(results2)
-        mas = list()
-        for item in b:
-            mas.append(str_to_dt(cipher.decrypt(item)))
-        mas2 = list()
-        for j in range(len(mas)):
-            day_do_dr = calculate_dates(mas[j])
-            if day_do_dr == None:
-                day_do_dr = int(0)
-            mas2.append(day_do_dr)
-        spisok = list()
-        for i0, i, j, e in zip(range(len(a0)), range(len(a)), range(len(mas)), range(len(mas2))):
-            spisok.append([a0[i0], cipher.decrypt(
-                a[i]).decode(), mas[j], mas2[e]])
-        spisok = sorted(spisok, key=itemgetter(3))
-        dr_in_mounth = 0
+        results = cursor.fetchall()
+        list_date_birth_from_db = list(results)
+        list_date_birth = [str_to_dt(cipher.decrypt(item)) for item in list_date_birth_from_db]
+        list_days_to_birth = [calculate_dates(list_date_birth[i]) for i in range(len(list_date_birth))]
+        spisok = sorted([[list_id_from_db[i0], cipher.decrypt(list_name_from_db[i]).decode(), list_date_birth[j], list_days_to_birth[e]] for i0, i, j, e in zip(range(len(list_id_from_db)), range(len(list_name_from_db)), range(len(list_date_birth)), range(len(list_days_to_birth)))], key=itemgetter(3))
+        birth_in_mounth = 0
         now = datetime.now()
         mounth = calendar.monthrange(now.year, now.month)[1]
-        for i in b:
+        for i in list_date_birth_from_db:
             lol = calculate_dates(str_to_dt(cipher.decrypt(i)))
             if lol == None:
                 lol = int(0)
             if (int(mounth) - lol) > lol:
-                dr_in_mounth += 1
-        print('this month birthday: ' + str(dr_in_mounth))
+                birth_in_mounth += 1
+        print('this month birthday: ' + str(birth_in_mounth))
         for i in range(len(spisok)):
+            if spisok[i][3] == None:
+                xb = 'id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i]
+                                                                  [1]) + ' date of birth: ' + str(spisok[i][2])
+                width = len(xb)
+                print('-'*int(width))
+                print(xb)
+                print(str(calculate_age(spisok[i][2])) + ' years old today')
             if spisok[i][3] <= 31:
                 xb = 'id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i]
                                                                   [1]) + ' date of birth: ' + str(spisok[i][2])
@@ -527,7 +498,7 @@ def main():
         # end soon dr
         main()
     elif usercomand == '9':
-        crypt(acount_name + '.db', acount_pass)
+        crypt(account_name + '.db', account_pass)
         crypt('database.db', 'testpass')
         sys.exit()
     else:
@@ -540,38 +511,35 @@ if(__name__ == '__main__'):
     # soon dr
     cursor.execute('SELECT id FROM dr')
     results = cursor.fetchall()
-    a0 = list(results)
+    list_id_from_db = list(results)
     cursor.execute('SELECT name FROM dr')
     results = cursor.fetchall()
-    a = list(results)
+    list_name_from_db = list(results)
     cursor.execute('SELECT date_birthday FROM dr')
-    results2 = cursor.fetchall()
-    b = list(results2)
-    mas = list()
-    for item in b:
-        mas.append(str_to_dt(cipher.decrypt(item)))
-    mas2 = list()
-    for j in range(len(mas)):
-        day_do_dr = calculate_dates(mas[j])
-        if day_do_dr == None:
-            day_do_dr = int(0)
-        mas2.append(day_do_dr)
-    spisok = list()
-    for i0, i, j, e in zip(range(len(a0)), range(len(a)), range(len(mas)), range(len(mas2))):
-        spisok.append([a0[i0], cipher.decrypt(a[i]).decode(), mas[j], mas2[e]])
-    spisok = sorted(spisok, key=itemgetter(3))
-    dr_in_mounth = 0
+    results = cursor.fetchall()
+    list_date_birth_from_db = list(results)
+    list_date_birth = [str_to_dt(cipher.decrypt(item)) for item in list_date_birth_from_db]
+    list_days_to_birth = [calculate_dates(list_date_birth[i]) for i in range(len(list_date_birth))]
+    spisok = sorted([[list_id_from_db[i0], cipher.decrypt(list_name_from_db[i]).decode(), list_date_birth[j], list_days_to_birth[e]] for i0, i, j, e in zip(range(len(list_id_from_db)), range(len(list_name_from_db)), range(len(list_date_birth)), range(len(list_days_to_birth)))], key=itemgetter(3))
+    birth_in_mounth = 0
     now = datetime.now()
     mounth = calendar.monthrange(now.year, now.month)[1]
-    for i in b:
+    for i in list_date_birth_from_db:
         lol = calculate_dates(str_to_dt(cipher.decrypt(i)))
         if lol == None:
             lol = int(0)
         if (int(mounth) - lol) > lol:
-            dr_in_mounth += 1
-    print('this month birthday: ' + str(dr_in_mounth))
+            birth_in_mounth += 1
+    print('this month birthday: ' + str(birth_in_mounth))
     for i in range(len(spisok)):
-        if spisok[i][3] <= 31:
+        if spisok[i][3] == None:
+            xb = 'id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i]
+                                                              [1]) + ' date of birth: ' + str(spisok[i][2])
+            width = len(xb)
+            print('-'*int(width))
+            print(xb)
+            print(str(calculate_age(spisok[i][2])) + ' years old today')          
+        elif spisok[i][3] <= 31:
             xb = 'id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i]
                                                               [1]) + ' date of birth: ' + str(spisok[i][2])
             width = len(xb)
