@@ -83,33 +83,20 @@ def calculate_age(born):
 
 def vhod():
     global account_name, account_pass, conn, cursor
-    db_crypt = os.path.isfile('database.db.bin')
-    if db_crypt:
-        decrypt_file('database.db.bin', 'testpass')
-    name_db = 'database.db'
-    cur_dir = os.getcwd()
-    path_db = os.path.join(cur_dir, name_db)
-    conn = sqlite3.connect(path_db)
-    conn.row_factory = lambda cursor, row: row[0]
-    cursor = conn.cursor()
-    cursor.execute("""CREATE TABLE IF NOT EXISTS users
-            (name TEXT, pass TEXT)
-                """)
-    conn.commit()
-    u_a = input('1-sign up 2-sign in 4-account действия 3-exit: ')
+    u_a = input('1-sign up 2-sign in 3-exit: ')
     if u_a == '3':
         sys.exit()
     elif u_a == '1':
         account_name = input('login: ')
-        cursor.execute('SELECT name FROM users')
-        results = cursor.fetchall()
-        crypt_login = list(results)
-        # check account_existence
-        for i in crypt_login:
-            if hash_s(account_name) == i:
-                print('account exists')
-                vhod()
-        # end check account_existence
+        while True:
+            # check account_existence
+            x1 = os.path.isfile(account_name + '.db')
+            if x1:
+                print('акаунт с таким именем уже есть')
+                account_name = input('login: ')
+            # end check account_existence
+            elif not x1:
+                break
         password1 = getpass.getpass('enter password: ')
         password2 = getpass.getpass('repeat password: ')
         while True:
@@ -124,13 +111,6 @@ def vhod():
         if u_podtver == '-':
             vhod()
         elif u_podtver == '+':
-            pass_hash_a = ph.hash(account_pass)
-            tr = hash_s(account_name)
-            users_data = [(tr, pass_hash_a)]
-            cursor.executemany("INSERT INTO users VALUES (?,?)", users_data)
-            conn.commit()
-            cursor.close()
-            conn.close()
             # make users db
             name_db = account_name + '.db'
             cur_dir = os.getcwd()
@@ -141,31 +121,50 @@ def vhod():
             cursor.execute("""CREATE TABLE dr
                 (id INTEGER, name TEXT, date_birthday TEXT)
                     """)
+            cursor.execute("""CREATE TABLE users
+                (name TEXT, pass TEXT)
+                    """)
+            conn.commit()
+            pass_hash_a = ph.hash(account_pass)
+            tr = hash_s(account_name)
+            users_data = [(tr, pass_hash_a)]
+            cursor.executemany("INSERT INTO users VALUES (?,?)", users_data)
             conn.commit()
     elif u_a == '2':
-        name_db = 'database.db'
-        cur_dir = os.getcwd()
-        path_db = os.path.join(cur_dir, name_db)
-        conn = sqlite3.connect(path_db)
-        conn.row_factory = lambda cursor, row: row[0]
-        cursor = conn.cursor()
         account_name = input('login: ')
-        cursor.execute('SELECT name FROM users')
-        results = cursor.fetchall()
-        crypt_login = list(results)
         # check account_existence
-        account_existence = 0
-        for i in crypt_login:
-            if hash_s(account_name) == i:
-                account_existence += 1
-        if account_existence == 0:
-            print('account does not exist')
-            vhod()
-        # end account_existence
+        while True:
+            x1 = os.path.isfile(account_name + '.db.bin')
+            x2 = os.path.isfile(account_name + '.db')
+            if x1 or x2:
+                break
+            elif not x1 or not x2:
+                print('акаунт с таким именем not ')
+                account_name = input('login: ')
+        # end check account_existence
         account_pass = getpass.getpass('enter password: ')
-        x1 = os.path.isfile(account_name + '.db.bin')
-        x2 = os.path.isfile(account_name + '.db')
         if x1:
+            while True:
+                try:
+                    decrypt_file(account_name + '.db.bin', account_pass)
+                except ValueError:
+                    print('wrong password')
+                    account_pass = getpass.getpass('enter password: ')
+                else:
+                    break
+            name_db = account_name + '.db'
+            cur_dir = os.getcwd()
+            path_db = os.path.join(cur_dir, name_db)
+            conn = sqlite3.connect(path_db)
+            conn.row_factory = lambda cursor, row: row[0]
+            cursor = conn.cursor()
+        elif x2:
+            name_db = account_name + '.db'
+            cur_dir = os.getcwd()
+            path_db = os.path.join(cur_dir, name_db)
+            conn = sqlite3.connect(path_db)
+            conn.row_factory = lambda cursor, row: row[0]
+            cursor = conn.cursor()
             account_name_h = str(hash_s(account_name))
             execute_arg = (account_name_h,)
             cursor.execute('SELECT pass FROM users WHERE name = ?', execute_arg)
@@ -181,124 +180,12 @@ def vhod():
                     break
             cursor.close()
             conn.close()
-            decrypt_file(account_name + '.db.bin', account_pass)
             name_db = account_name + '.db'
             cur_dir = os.getcwd()
             path_db = os.path.join(cur_dir, name_db)
             conn = sqlite3.connect(path_db)
             conn.row_factory = lambda cursor, row: row[0]
             cursor = conn.cursor()
-        elif x2:
-            name_db = 'database.db'
-            cur_dir = os.getcwd()
-            path_db = os.path.join(cur_dir, name_db)
-            conn = sqlite3.connect(path_db)
-            conn.row_factory = lambda cursor, row: row[0]
-            cursor = conn.cursor()
-            account_name_h = str(hash_s(account_name))
-            execute_arg = (account_name_h,)
-            cursor.execute('SELECT pass FROM users WHERE name = ?', execute_arg)
-            results = cursor.fetchone()
-            agony_pass = results
-            while True:
-                try:
-                    ph.verify(agony_pass, account_pass)
-                except:
-                    print('Wrong password')
-                    account_pass = getpass.getpass('enter password: ')
-                else:
-                    break
-        cursor.close()
-        conn.close()
-        name_db = account_name + '.db'
-        cur_dir = os.getcwd()
-        path_db = os.path.join(cur_dir, name_db)
-        conn = sqlite3.connect(path_db)
-        conn.row_factory = lambda cursor, row: row[0]
-        cursor = conn.cursor()
-    elif u_a == '4':
-        uc = input('1-delete account 2-смена пароля: ') 
-        while True:
-            if uc == '1':
-                account_name = input('имя акка ')
-                account_name_h = str(hash_s(account_name))
-                execute_arg = (account_name_h,)
-                cursor.execute('SELECT pass FROM users WHERE name = ?', execute_arg)
-                results = cursor.fetchone()
-                agony_pass = results
-                account_pass = getpass.getpass('enter password: ')
-                while True:
-                    try:
-                        ph.verify(agony_pass, account_pass)
-                    except:
-                        print('Wrong password')
-                        account_pass = getpass.getpass('enter password: ')
-                    else:
-                        break
-                try:
-                    os.remove(account_name + '.db.bin')
-                except:
-                    os.remove(account_name + '.db')
-                execute_arg = (account_name_h,)
-                cursor.execute('DELETE FROM users WHERE name = ?', execute_arg)
-                conn.commit()
-                cursor.close()
-                conn.close()
-                crypt('database.db', 'testpass')
-                vhod()
-                break
-            elif uc == '2':
-                account_name = input('введи имя акаунта: ')
-                # check account_existence
-                cursor.execute('SELECT name FROM users')
-                results = cursor.fetchall()
-                crypt_login = list(results)
-                account_existence = 0
-                for i in crypt_login:
-                    if hash_s(account_name) == i:
-                        account_existence += 1
-                    if account_existence == 0:
-                        print('account does not exist')
-                        vhod()
-                # end account_existence
-                account_pass = getpass.getpass('введи пароль: ')
-                account_name_h = str(hash_s(account_name))
-                execute_arg = (account_name_h,)
-                cursor.execute('SELECT pass FROM users WHERE name = ?', execute_arg)
-                results = cursor.fetchone()
-                agony_pass = results
-                while True:
-                    try:
-                        ph.verify(agony_pass, account_pass)
-                    except:
-                        print('Wrong password')
-                        account_pass = getpass.getpass('enter password: ')
-                    else:
-                        break
-                decrypt_file(account_name + '.db.bin', account_pass)
-                new_account_pass_1 = getpass.getpass('новый pass: ')
-                new_account_pass_2 = getpass.getpass('повтори пасс: ')
-                while True:
-                    if new_account_pass_1 == new_account_pass_2:
-                        new_account_pass = new_account_pass_1
-                        break
-                    else:
-                        print('неверный пароль')
-                        new_account_pass_1 = getpass.getpass('pass: ')
-                        new_account_pass_2 = getpass.getpass('повтори пасс: ')
-                new_account_pass_agony = ph.hash(new_account_pass)
-                sql = """UPDATE users SET pass = ? WHERE name = ?"""
-                cursor.execute(sql, (new_account_pass_agony, account_name_h))
-                crypt(account_name + '.db', new_account_pass)
-                conn.commit()
-                cursor.close()
-                conn.close()
-                vhod()
-                break
-            else:
-                print('wrong command')
-                uc = input('1-sing out 2-delete account 3-смена пароля: ')
-        vhod()
     else:
         print('wrong command')
         vhod()
@@ -357,7 +244,7 @@ def main():
             print('in ' + str(spisok[i][3]) + ' days it will be ' +
                   str(calculate_age(spisok[i][2])) + ' years')
     # end soon dr
-    option_bar = '1-Add 2-view 3-remove person 4-delete all person 5-edit 6-statistics 7-sign out 9-exit: '
+    option_bar = '1-Add 2-view 3-remove person 4-delete all person 5-edit 6-statistics 7-account действия 9-exit: '
     width = len(option_bar) + 1
     print('-'*int(width))
     usercomand = input(option_bar)
@@ -539,13 +426,95 @@ def main():
         print('average age: ' + str(avg))
         print("birthdays this year: " + str(dr_in_this_year))
         main()
-    elif usercomand == '7': #7-sign out
-        crypt(account_name + '.db', account_pass)
-        vhod()
-        main()
+    elif usercomand == '7': #7-account действия
+        uc = input('1-delete account 2-смена пароля 3-sign out: ') 
+        if uc  == '3':
+            crypt(account_name + '.db', account_pass)
+            vhod()
+            main()
+        elif uc == '1':
+            account_name = input('имя акка ')
+            # check account_existence
+            while True:
+                x1 = os.path.isfile(account_name + '.db')
+                if x1:
+                    break
+                elif not x1:
+                    print('акаунт с таким именем not ')
+                    account_name = input('login: ')
+            # end check account_existence
+            account_name_h = str(hash_s(account_name))
+            execute_arg = (account_name_h,)
+            cursor.execute('SELECT pass FROM users WHERE name = ?', execute_arg)
+            results = cursor.fetchone()
+            agony_pass = results
+            account_pass = getpass.getpass('enter password: ')
+            while True:
+                try:
+                    ph.verify(agony_pass, account_pass)
+                except:
+                    print('Wrong password')
+                    account_pass = getpass.getpass('enter password: ')
+                else:
+                    break
+            cursor.close()
+            conn.close()
+            try:
+                os.remove(account_name + '.db.bin')
+            except:
+                os.remove(account_name + '.db')
+            vhod()
+            main()
+        elif uc == '2': #смена пароля
+            account_name = input('введи имя акаунта: ')
+            # check account_existence
+            cursor.execute('SELECT name FROM users')
+            results = cursor.fetchall()
+            crypt_login = list(results)
+            account_existence = 0
+            for i in crypt_login:
+                if hash_s(account_name) == i:
+                    account_existence += 1
+                if account_existence == 0:
+                    print('account does not exist')
+                    vhod()
+                    main()
+            # end account_existence
+            account_pass = getpass.getpass('введи пароль: ')
+            account_name_h = str(hash_s(account_name))
+            execute_arg = (account_name_h,)
+            cursor.execute('SELECT pass FROM users WHERE name = ?', execute_arg)
+            results = cursor.fetchone()
+            agony_pass = results
+            while True:
+                try:
+                    ph.verify(agony_pass, account_pass)
+                except:
+                    print('Wrong password')
+                    account_pass = getpass.getpass('enter password: ')
+                else:
+                    break
+            new_account_pass_1 = getpass.getpass('новый pass: ')
+            new_account_pass_2 = getpass.getpass('повтори пасс: ')
+            while True:
+                if new_account_pass_1 == new_account_pass_2:
+                    account_pass = new_account_pass_1
+                    break
+                else:
+                    print('неверный пароль')
+                    new_account_pass_1 = getpass.getpass('pass: ')
+                    new_account_pass_2 = getpass.getpass('повтори пасс: ')
+            new_account_pass_agony = ph.hash(account_pass)
+            sql = """UPDATE users SET pass = ? WHERE name = ?"""
+            cursor.execute(sql, (new_account_pass_agony, account_name_h))
+            conn.commit()
+            main()
+        else:
+            print('wrong command')
+            vhod()
+            main()
     elif usercomand == '9':  #9-exit
         crypt(account_name + '.db', account_pass)
-        crypt('database.db', 'testpass')
         sys.exit()
     else:
         print('wrong command')
