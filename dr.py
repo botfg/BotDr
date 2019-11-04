@@ -110,7 +110,7 @@ def vhod():
                 account_pass = password1
                 break
             elif password1 != password2:
-                print('passwords are different')
+                print('different passwords')
                 password1 = getpass.getpass('enter password: ')
                 password2 = getpass.getpass('repeat password: ')
                 if password1 or password2 == 'q':
@@ -261,8 +261,7 @@ def main():
             id = 1
         else:
             id = list_id_from_db[-1] + 1
-        uc = input('- no add  + add: ' + user_name +
-                   ' ' + date_birthday + ": ")
+        uc = input('- no add  + add: ' + user_name + ' ' + date_birthday + ": ")
         if uc == '+':
             date_dr = [(id, user_name_a, date_birthday_a)]
             cursor.executemany("INSERT INTO dr VALUES (?,?,?)", date_dr)
@@ -284,13 +283,11 @@ def main():
         list_days_to_birth = [calculate_dates(list_date_birth[i]) for i in range(len(list_date_birth))]
         spisok = sorted([[list_id_from_db[i0], cipher.decrypt(list_name_from_db[i]).decode(), list_date_birth[j], list_days_to_birth[e]] for i0, i, j, e in zip(range(len(list_id_from_db)), range(len(list_name_from_db)), range(len(list_date_birth)), range(len(list_days_to_birth)))], key=itemgetter(3))
         for i in range(len(spisok)):
-            xb = 'id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i]
-                                                              [1]) + ' date of birth: ' + str(spisok[i][2])
+            xb = 'id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2])
             width = len(xb)
             print('-'*int(width))
             print(xb)
-            print('in ' + str(spisok[i][3]) + ' days it will be ' +
-                  str(calculate_age(spisok[i][2])) + ' years')
+            print('in ' + str(spisok[i][3]) + ' days it will be ' + str(calculate_age(spisok[i][2])) + ' years')
         main()
     elif usercomand == '4':  #4-delete all person
         uc = input("+ yes - no: ")
@@ -388,8 +385,7 @@ def main():
                     print('such name already exists')
                     continue
                 break
-            uc = input('- no add  + add: ' + str(user_name) +
-                       ' ' + str(spisok[k][2]) + ": ")
+            uc = input('- no add  + add: ' + str(user_name) + ' ' + str(spisok[k][2]) + ": ")
             if uc == '+':
                 cursor.execute('DELETE FROM dr WHERE id = ' + uc_id)
                 user_name_a = str_to_fernet(user_name)
@@ -411,8 +407,7 @@ def main():
                         main()
                 else:
                     break
-            uc = input('- no add  + add: ' +
-                       spisok[k][1] + ' ' + date_birthday + ": ")
+            uc = input('- no add  + add: ' + spisok[k][1] + ' ' + date_birthday + ": ")
             #TODO удалить сразу с базы
             if uc == '+':
                 account_name = input('введи имя акаунта: ')
@@ -464,10 +459,10 @@ def main():
         mas_year = [calculate_age(str_to_dt(cipher.decrypt(item))) - 1 for item in list_date_birth_from_db]
         dr_in_this_year = 0
         for i in list_date_birth_from_db:
-            lol = calculate_dates(str_to_dt(cipher.decrypt(i)))
-            if lol == None:
-                lol = int(0)
-            if (year - lol) > lol:
+            days_to_birthday = calculate_dates(str_to_dt(cipher.decrypt(i)))
+            if days_to_birthday == None:
+                days_to_birthday = int(0)
+            if (year - days_to_birthday) > days_to_birthday:
                 dr_in_this_year += 1
         avg = statistics.mean(mas_year)
         print('total people: ' + str(len(list_date_birth_from_db)))
@@ -539,32 +534,29 @@ def main():
             now = datetime.now()
             mounth = calendar.monthrange(now.year, now.month)[1]
             for i in list_date_birth_from_db:
-                lol = calculate_dates(str_to_dt(cipher.decrypt(i)))
-                if lol == None:
-                    lol = int(0)
-                if (int(mounth) - lol) > lol:
+                days_to_birthday = calculate_dates(str_to_dt(cipher.decrypt(i)))
+                if days_to_birthday == None:
+                    days_to_birthday = int(0)
+                if (int(mounth) - days_to_birthday) > days_to_birthday:
                     birth_in_mounth += 1
             print('this month birthday: ' + str(birth_in_mounth))
             for i in range(len(spisok)):
                 if spisok[i][3] == None:
-                    xb = 'id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i]
-                                                                      [1]) + ' date of birth: ' + str(spisok[i][2])
+                    xb = 'id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2])
                     width = len(xb)
                     print('-'*int(width))
                     print(xb)
                     print(str(calculate_age(spisok[i][2])) + ' years old today')          
                 elif spisok[i][3] <= 31:
-                    xb = 'id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i]
-                                                                      [1]) + ' date of birth: ' + str(spisok[i][2])
+                    xb = 'id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2])
                     width = len(xb)
                     print('-'*int(width))
                     print(xb)
-                    print('in ' + str(spisok[i][3]) + ' days it will be ' +
-                          str(calculate_age(spisok[i][2])) + ' years')
+                    print('in ' + str(spisok[i][3]) + ' days it will be ' + str(calculate_age(spisok[i][2])) + ' years')
             # end soon dr
             main()
         elif uc == '2': #Change Password
-            account_name = input('enter account name:')
+            account_name = input('enter account name: ')
             if account_name == 'q':
                 main()
             # check account_existence
@@ -579,7 +571,7 @@ def main():
                     print('account does not exist')
                     main()
             # end account_existence
-            account_pass = getpass.getpass('enter password:')
+            account_pass = getpass.getpass('enter password: ')
             if account_pass == 'q':
                 main()
             account_name_h = str(hash_s(account_name))
@@ -597,16 +589,23 @@ def main():
                         main()
                 else:
                     break
-            new_account_pass_1 = getpass.getpass('enter new pass:')
+            new_account_pass_1 = getpass.getpass('enter new pass: ')
             if new_account_pass_1 == 'q':
                 main()
-            new_account_pass_2 = getpass.getpass('repeat new pass:')
+            new_account_pass_2 = getpass.getpass('repeat new pass: ')
             while True:
-                if new_account_pass_1 == new_account_pass_2:
+                if new_account_pass_1 and new_account_pass_2 == account_pass:
+                    print('valid password entered')
+                    new_account_pass_1 = getpass.getpass('enter new password: ')
+                    if new_account_pass_1 == 'q':
+                        main()
+                    new_account_pass_2 = getpass.getpass('repeat new password: ')   
+
+                elif new_account_pass_1 == new_account_pass_2:
                     account_pass = new_account_pass_1
                     break
                 else:
-                    print('wrong password')
+                    print('different passwords')
                     new_account_pass_1 = getpass.getpass('enter new password: ')
                     if new_account_pass_1 == 'q':
                         main()
@@ -646,27 +645,24 @@ if(__name__ == '__main__'):
     now = datetime.now()
     mounth = calendar.monthrange(now.year, now.month)[1]
     for i in list_date_birth_from_db:
-        lol = calculate_dates(str_to_dt(cipher.decrypt(i)))
-        if lol == None:
-            lol = int(0)
-        if (int(mounth) - lol) > lol:
+        days_to_birthday = calculate_dates(str_to_dt(cipher.decrypt(i)))
+        if days_to_birthday == None:
+            days_to_birthday = int(0)
+        if (int(mounth) - days_to_birthday) > days_to_birthday:
             birth_in_mounth += 1
     print('this month birthday: ' + str(birth_in_mounth))
     for i in range(len(spisok)):
         if spisok[i][3] == None:
-            xb = 'id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i]
-                                                              [1]) + ' date of birth: ' + str(spisok[i][2])
+            xb = 'id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2])
             width = len(xb)
             print('-'*int(width))
             print(xb)
             print(str(calculate_age(spisok[i][2])) + ' years old today')          
         elif spisok[i][3] <= 31:
-            xb = 'id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i]
-                                                              [1]) + ' date of birth: ' + str(spisok[i][2])
+            xb = 'id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2])
             width = len(xb)
             print('-'*int(width))
             print(xb)
-            print('in ' + str(spisok[i][3]) + ' days it will be ' +
-                  str(calculate_age(spisok[i][2])) + ' years')
+            print('in ' + str(spisok[i][3]) + ' days it will be ' + str(calculate_age(spisok[i][2])) + ' years')
     # end soon dr
     main()
