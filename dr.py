@@ -233,9 +233,9 @@ def main():
         # проверка на повторение
         cursor.execute('SELECT name FROM dr')
         results = cursor.fetchall()
-        list_name_from_db = list(results)
-        mas_d_n = [cipher.decrypt(x).decode() for x in list_name_from_db]
-        if user_name in mas_d_n:
+        list_name_from_db = set(results)
+        bunch_d_n = {cipher.decrypt(x).decode() for x in list_name_from_db}
+        if user_name in bunch_d_n:
             print('such name already exists')
             main()
         user_name_a = str_to_fernet(user_name)
@@ -256,11 +256,11 @@ def main():
         # ID
         cursor.execute('SELECT id FROM dr')
         results = cursor.fetchall()
-        list_id_from_db = list(results)
-        if len(list_id_from_db) == 0:
+        cortege_id_from_db = dict(results)
+        if len(cortege_id_from_db) == 0:
             id = 1
         else:
-            id = list_id_from_db[-1] + 1
+            id = cortege_id_from_db[-1] + 1
         uc = input('- no add  + add: ' + user_name + ' ' + date_birthday + ": ")
         if uc == '+':
             date_dr = [(id, user_name_a, date_birthday_a)]
@@ -302,7 +302,7 @@ def main():
                     cursor.execute('SELECT pass FROM users WHERE name = ?', execute_arg)
                     results = cursor.fetchone()
                 except:
-                    print('не тот логин')
+                    print('wrong login')
                     account_name = input('account name: ')
                     if account_name == 'q':
                         main()
@@ -326,10 +326,72 @@ def main():
             conn.commit()
         main()
     elif usercomand == '3':  #3-remove person
-        uc = input('enter id: ')
-        if uc == 'q':
+        uc_id = input('enter id: ')
+        if uc_id == 'q':
             main()
-        cursor.execute('DELETE FROM dr WHERE id = ' + uc)
+        # проверка id на сущ
+        cursor.execute('SELECT id FROM dr')
+        results = cursor.fetchall()
+        bunch_name_from_db = set(results)
+        if not (int(uc_id) in bunch_name_from_db):
+            print('id not found')
+            main()
+        # конец проверки id
+        # вывод данных персоны
+        cursor.execute('SELECT id FROM dr')
+        results = cursor.fetchall()
+        list_id_from_db = list(results)
+        cursor.execute('SELECT name FROM dr')
+        results = cursor.fetchall()
+        list_name_from_db = list(results)
+        cursor.execute('SELECT date_birthday FROM dr')
+        results = cursor.fetchall()
+        list_date_birth_from_db = list(results)
+        list_date_birth = [str_to_dt(cipher.decrypt(item)) for item in list_date_birth_from_db]
+        list_days_to_birth = [calculate_dates(list_date_birth[i]) for i in range(len(list_date_birth))]
+        spisok = sorted([[list_id_from_db[i0], cipher.decrypt(list_name_from_db[i]).decode(), list_date_birth[j], list_days_to_birth[e]] for i0, i, j, e in zip(range(len(list_id_from_db)), range(len(list_name_from_db)), range(len(list_date_birth)), range(len(list_days_to_birth)))], key=itemgetter(3))
+        if uc_id == 'q':
+            main()
+        while True:
+            try:
+                for i in range(len(spisok)):
+                    if spisok[i][0] == int(uc_id):
+                        k = i
+                xb = 'id: ' + uc_id + ' name: ' + \
+                    str(spisok[k][1]) + ' date of birth: ' + str(spisok[k][2])
+            except UnboundLocalError:
+                print("invalid id: no item with id " + uc_id)
+                uc_id = input('enter id: ')
+                if uc_id == 'q':
+                    main()
+            except ValueError:
+                print("invalid id: id don'execute_arg have letters")
+                uc_id = input('enter id: ')
+                if uc_id == 'q':
+                    main()
+            else:
+                break
+        width = len(xb)
+        print('-'*int(width))
+        print(xb) 
+        # конец вывода персоны      
+        cursor.execute('SELECT pass FROM users')
+        results = cursor.fetchone()
+        agony_pass = results
+        account_pass = getpass.getpass('enter password: ')
+        if account_pass == 'q':
+            main()
+        while True:
+            try:
+                ph.verify(agony_pass, account_pass)
+            except:
+                print('Wrong password')
+                account_pass = getpass.getpass('enter password: ')
+                if account_pass == 'q':
+                    main()
+            else:
+                break    
+        cursor.execute('DELETE FROM dr WHERE id = ' + uc_id)
         conn.commit()
         main()
     elif usercomand == '5':  #5-edit
@@ -379,20 +441,30 @@ def main():
                 # проверка на повторение
                 cursor.execute('SELECT name FROM dr')
                 results = cursor.fetchall()
-                a = list(results)
-                mas_d_n = [cipher.decrypt(i).decode() for i in a]
-                if user_name in mas_d_n:
+                names_in_bd = set(results)
+                bunch_d_n = {cipher.decrypt(i).decode() for i in names_in_bd}
+                if user_name in bunch_d_n:
                     print('such name already exists')
                     continue
                 break
-            uc = input('- no add  + add: ' + str(user_name) + ' ' + str(spisok[k][2]) + ": ")
-            if uc == '+':
-                cursor.execute('DELETE FROM dr WHERE id = ' + uc_id)
-                user_name_a = str_to_fernet(user_name)
-                date_birthday_a = str_to_fernet(str(spisok[k][2]))
-                date_dr = [(uc_id, user_name_a, date_birthday_a)]
-                cursor.executemany("INSERT INTO dr VALUES (?,?,?)", date_dr)
-                conn.commit()
+            cursor.execute('SELECT pass FROM users')
+            results = cursor.fetchone()
+            account_pass = getpass.getpass('enter password: ')
+            if account_pass == 'q':
+                main()
+            while True:
+                try:
+                    ph.verify(results, account_pass)
+                except:
+                    print('Wrong password')
+                    account_pass = getpass.getpass('enter password: ')
+                    if account_pass == 'q':
+                        vhod() 
+                else:
+                    break
+            sql = """UPDATE dr SET name = ? WHERE id = ?"""
+            cursor.execute(sql, (str_to_fernet(user_name), int(uc_id)))
+            conn.commit()
         elif uc == '2':
             date_birthday = input('When is your birthday? [YYYY.MM.DD] ')
             if date_birthday == 'q':
@@ -407,37 +479,24 @@ def main():
                         main()
                 else:
                     break
-            uc = input('- no add  + add: ' + spisok[k][1] + ' ' + date_birthday + ": ")
-            #TODO удалить сразу с базы
-            if uc == '+':
-                account_name = input('введи имя акаунта: ')
-                if account_name == 'q':
-                    main()
-                account_name_h = str(hash_s(account_name))
-                execute_arg = (account_name_h,)
-                cursor.execute('SELECT pass FROM users WHERE name = ?', execute_arg)
-                results = cursor.fetchone()
-                account_pass = getpass.getpass('password: ')
-                if account_pass == 'q':
-                    main()
-                while True:
-                    try:
-                        ph.verify(results, account_pass)
-                    except:
-                        print('Wrong password')
-                        account_pass = getpass.getpass('password: ')
-                        if account_pass == 'q':
-                            vhod()
-                    else:
-                        break 
-                cursor.execute('DELETE FROM dr WHERE id = ' + uc_id)
-                user_name_a = str_to_fernet(spisok[k][1])
-                date_birthday_a = str_to_fernet(date_birthday)
-                date_dr = [(uc_id, user_name_a, date_birthday_a)]
-                cursor.executemany("INSERT INTO dr VALUES (?,?,?)", date_dr)
-                conn.commit()
-            elif uc == '-':
+            cursor.execute('SELECT pass FROM users')
+            results = cursor.fetchone()
+            account_pass = getpass.getpass('enter password: ')
+            if account_pass == 'q':
                 main()
+            while True:
+                try:
+                    ph.verify(results, account_pass)
+                except:
+                    print('Wrong password')
+                    account_pass = getpass.getpass('enter password: ')
+                    if account_pass == 'q':
+                        vhod() 
+                else:
+                    break
+            sql = """UPDATE dr SET date_birthday = ? WHERE id = ?"""
+            cursor.execute(sql, (str_to_fernet(date_birthday), int(uc_id)))
+            conn.commit()
         elif uc == 'q':
             main()
         else:
@@ -478,23 +537,7 @@ def main():
         elif uc == 'q':
             main()
         elif uc == '1':
-            account_name = input('account name: ')
-            if account_name == 'q':
-                main()
-            # check account_existence
-            while True:
-                x1 = os.path.isfile(account_name + '.db')
-                if x1:
-                    break
-                elif not x1:
-                    print('account with this name was not found')
-                    account_name = input('login: ')
-                    if account_name == 'q':
-                        main()
-            # end check account_existence
-            account_name_h = str(hash_s(account_name))
-            execute_arg = (account_name_h,)
-            cursor.execute('SELECT pass FROM users WHERE name = ?', execute_arg)
+            cursor.execute('SELECT pass FROM users')
             results = cursor.fetchone()
             agony_pass = results
             account_pass = getpass.getpass('enter password: ')
@@ -510,73 +553,65 @@ def main():
                         main()
                 else:
                     break
-            cursor.close()
-            conn.close()
-            try:
-                os.remove(account_name + '.db.bin')
-            except:
-                os.remove(account_name + '.db')
-            vhod()
-            # soon dr
-            cursor.execute('SELECT id FROM dr')
-            results = cursor.fetchall()
-            list_id_from_db = list(results)
-            cursor.execute('SELECT name FROM dr')
-            results = cursor.fetchall()
-            list_name_from_db = list(results)
-            cursor.execute('SELECT date_birthday FROM dr')
-            results = cursor.fetchall()
-            list_date_birth_from_db = list(results)
-            list_date_birth = [str_to_dt(cipher.decrypt(item)) for item in list_date_birth_from_db]
-            list_days_to_birth = [calculate_dates(list_date_birth[i]) for i in range(len(list_date_birth))]
-            spisok = sorted([[list_id_from_db[i0], cipher.decrypt(list_name_from_db[i]).decode(), list_date_birth[j], list_days_to_birth[e]] for i0, i, j, e in zip(range(len(list_id_from_db)), range(len(list_name_from_db)), range(len(list_date_birth)), range(len(list_days_to_birth)))], key=itemgetter(3))
-            birth_in_mounth = 0
-            now = datetime.now()
-            mounth = calendar.monthrange(now.year, now.month)[1]
-            for i in list_date_birth_from_db:
-                days_to_birthday = calculate_dates(str_to_dt(cipher.decrypt(i)))
-                if days_to_birthday == None:
-                    days_to_birthday = int(0)
-                if (int(mounth) - days_to_birthday) > days_to_birthday:
-                    birth_in_mounth += 1
-            print('this month birthday: ' + str(birth_in_mounth))
-            for i in range(len(spisok)):
-                if spisok[i][3] == None:
-                    xb = 'id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2])
-                    width = len(xb)
-                    print('-'*int(width))
-                    print(xb)
-                    print(str(calculate_age(spisok[i][2])) + ' years old today')          
-                elif spisok[i][3] <= 31:
-                    xb = 'id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2])
-                    width = len(xb)
-                    print('-'*int(width))
-                    print(xb)
-                    print('in ' + str(spisok[i][3]) + ' days it will be ' + str(calculate_age(spisok[i][2])) + ' years')
-            # end soon dr
-            main()
-        elif uc == '2': #Change Password
-            account_name = input('enter account name: ')
-            if account_name == 'q':
+            uc = input('del this account? 1-Y 2-N: ')
+            if uc == 'N':
                 main()
-            # check account_existence
-            cursor.execute('SELECT name FROM users')
-            results = cursor.fetchall()
-            crypt_login = list(results)
-            account_existence = 0
-            for i in crypt_login:
-                if hash_s(account_name) == i:
-                    account_existence += 1
-                if account_existence == 0:
-                    print('account does not exist')
-                    main()
-            # end account_existence
+            elif uc == 'Y':
+                cursor.close()
+                conn.close()
+                try:
+                    os.remove(account_name + '.db.bin')
+                except:
+                    os.remove(account_name + '.db')
+                vhod()
+                # soon dr
+                cursor.execute('SELECT id FROM dr')
+                results = cursor.fetchall()
+                list_id_from_db = list(results)
+                cursor.execute('SELECT name FROM dr')
+                results = cursor.fetchall()
+                list_name_from_db = list(results)
+                cursor.execute('SELECT date_birthday FROM dr')
+                results = cursor.fetchall()
+                list_date_birth_from_db = list(results)
+                list_date_birth = [str_to_dt(cipher.decrypt(item)) for item in list_date_birth_from_db]
+                list_days_to_birth = [calculate_dates(list_date_birth[i]) for i in range(len(list_date_birth))]
+                spisok = sorted([[list_id_from_db[i0], cipher.decrypt(list_name_from_db[i]).decode(), list_date_birth[j], list_days_to_birth[e]] for i0, i, j, e in zip(range(len(list_id_from_db)), range(len(list_name_from_db)), range(len(list_date_birth)), range(len(list_days_to_birth)))], key=itemgetter(3))
+                birth_in_mounth = 0
+                now = datetime.now()
+                mounth = calendar.monthrange(now.year, now.month)[1]
+                for i in list_date_birth_from_db:
+                    days_to_birthday = calculate_dates(str_to_dt(cipher.decrypt(i)))
+                    if days_to_birthday == None:
+                        days_to_birthday = int(0)
+                    if (int(mounth) - days_to_birthday) > days_to_birthday:
+                        birth_in_mounth += 1
+                print('this month birthday: ' + str(birth_in_mounth))
+                for i in range(len(spisok)):
+                    if spisok[i][3] == None:
+                        xb = 'id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2])
+                        width = len(xb)
+                        print('-'*int(width))
+                        print(xb)
+                        print(str(calculate_age(spisok[i][2])) + ' years old today')          
+                    elif spisok[i][3] <= 31:
+                        xb = 'id: ' + str(spisok[i][0]) + ' name: ' + str(spisok[i][1]) + ' date of birth: ' + str(spisok[i][2])
+                        width = len(xb)
+                        print('-'*int(width))
+                        print(xb)
+                        print('in ' + str(spisok[i][3]) + ' days it will be ' + str(calculate_age(spisok[i][2])) + ' years')
+                # end soon dr
+                main()
+            elif uc == 'q':
+                main()
+            else:
+                print('wrong command')
+                main()
+        elif uc == '2': #Change Password
             account_pass = getpass.getpass('enter password: ')
             if account_pass == 'q':
                 main()
-            account_name_h = str(hash_s(account_name))
-            execute_arg = (account_name_h,)
-            cursor.execute('SELECT pass FROM users WHERE name = ?', execute_arg)
+            cursor.execute('SELECT pass FROM users')
             results = cursor.fetchone()
             agony_pass = results
             while True:
@@ -611,8 +646,8 @@ def main():
                         main()
                     new_account_pass_2 = getpass.getpass('repeat new password: ')
             new_account_pass_agony = ph.hash(account_pass)
-            sql = """UPDATE users SET pass = ? WHERE name = ?"""
-            cursor.execute(sql, (new_account_pass_agony, account_name_h))
+            sql = """UPDATE users SET pass = ?"""
+            cursor.execute(sql, (new_account_pass_agony,))
             conn.commit()
             main()
         else:
