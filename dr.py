@@ -634,6 +634,7 @@ def main():
                                 print(xb)
                                 print('in ' + str(spisok[i][3]) + ' days it will be ' + str(calculate_age(spisok[i][2])) + ' years')
                         # end soon dr
+                        print("write q to go back")
                         break
                     elif uc == 'q':
                         break
@@ -734,4 +735,5 @@ if(__name__ == '__main__'):
             print(xb)
             print('in ' + str(spisok[i][3]) + ' days it will be ' + str(calculate_age(spisok[i][2])) + ' years')
     # end soon dr
+    print("write q to go back")
     main()
