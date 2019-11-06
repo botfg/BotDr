@@ -1,5 +1,4 @@
 # <center> BotDr </center>
----
 #### BotDr - python3 console script for working with birthday dates supporting local accounts
 
 
