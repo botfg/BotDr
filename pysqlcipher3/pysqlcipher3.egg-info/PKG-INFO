@@ -1,0 +1,26 @@
+Metadata-Version: 1.1
+Name: pysqlcipher3
+Version: 1.0.3
+Summary: DB-API 2.0 interface for SQLCIPHER 3.x
+Home-page: https://github.com/rigglemania/pysqlcipher3
+Author: David Riggleman
+Author-email: davidriggleman@gmail.com
+License: zlib/libpng
+Description: Python interface to SQLCipher
+        
+        pysqlcipher3 is an interface to the SQLite 3.x embedded relational
+        database engine. It is almost fully compliant with the Python database API
+        version 2.0. At the same time, it also exposes the unique features of
+        SQLCipher. Prior to installation, libsqlcipher must already be installed
+        on your system, with the process dependent on your operating system.
+Platform: ALL
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: zlib/libpng License
+Classifier: Operating System :: MacOS :: MacOS X
+Classifier: Operating System :: Microsoft :: Windows
+Classifier: Operating System :: POSIX
+Classifier: Programming Language :: C
+Classifier: Programming Language :: Python
+Classifier: Topic :: Database :: Database Engines/Servers
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
