@@ -20,13 +20,8 @@ import os
 import sys
 from datetime import date, datetime
 
-
+import numpy
 from pysqlcipher3 import dbapi2 as sqlite
-from pyfiglet import Figlet
-
-
-f = Figlet(font='slant')
-print(f.renderText('Bot DR'))
 
 
 def vhod():
@@ -145,7 +140,8 @@ def main():
             main()
         while True:
             try:
-                date_birthday = datetime.strptime(date_birthday, '%Y.%m.%d').date()
+                date_birthday = datetime.strptime(
+                    date_birthday, '%Y.%m.%d').date()
                 if date_birthday == 'q':
                     main()
             except ValueError:
@@ -157,9 +153,10 @@ def main():
                 break
         while True:
             uc = input('[Y/n] add: ' + user_name +
-                       ' ' + str(date_birthday).replace('-','.') + ": ")
+                       ' ' + str(date_birthday).replace('-', '.') + ": ")
             if uc == 'Y':
-                cursor.execute("insert into users(name, bday) values (?, ?)",(user_name, date_birthday))
+                cursor.execute(
+                    "insert into users(name, bday) values (?, ?)", (user_name, date_birthday))
                 conn.commit()
                 break
             elif uc == 'n':
@@ -171,9 +168,9 @@ def main():
     elif usercomand == '2':  # 2-view
         cursor.execute("PRAGMA key={}".format(account_pass))
         cursor.execute('SELECT name FROM users')
-        results = cursor.fetchall()
+        results = numpy.array(cursor.fetchall(), dtype=str)
         if len(results) == 0:
-            print('no person') 
+            print('no person')
             main()
         cursor.execute("""select name, bday, cast (julianday(
             case
@@ -188,12 +185,13 @@ def main():
                 else strftime('%Y-', 'now') - strftime('%Y-', bday) + '1 year'
             end
         ) as int) as year_after_bday from users order by tillbday""")
-        results = cursor.fetchall()
-        for i in results:
-            xb = ('name: ' + str(i[0]) + ' date of birth: ' + str(i[1]).replace('-','.'))
+        results = numpy.array(cursor.fetchall(), dtype=str)
+        for item in results:
+            xb = ('name: ' + item[0] + ' date of birth: ' +
+                  item[1].replace('-', '.'))
             print('-'*int(len(xb)))
             print(xb)
-            print('in {} days it will be {} years'.format(i[2], i[3]))
+            print('in {} days it will be {} years'.format(item[2], item[3]))
         main()
     elif usercomand == '4':  # 4-delete all person
         cursor.execute("PRAGMA key={}".format(account_pass))
@@ -210,7 +208,7 @@ def main():
                 else strftime('%Y-', 'now') - strftime('%Y-', bday) + '1 year'
             end
         ) as int) as year_after_bday from users order by tillbday""")
-        results = cursor.fetchall()
+        results = numpy.array(cursor.fetchall(), dtype=str)
         if len(results) == 0:
             print('no person')
             main()
@@ -253,15 +251,15 @@ def main():
                 else strftime('%Y-', 'now') - strftime('%Y-', bday) + '1 year'
             end
         ) as int) as year_after_bday from users order by tillbday""")
-        results = cursor.fetchall()
+        results = numpy.array(cursor.fetchall(), dtype=str)
         if len(results) > 0:
             list_name = list()
-            for i in range(len(results)):
-                xb = ('name: ' + str(i[0]) + ' date of birth: ' + str(i[1]).replace('-','.'))
-                print('-'*int(len(xb)))
+            for item in results:
+                xb = ('name: ' + item[0] + ' date of birth: ' + item[1].replace('-', '.'))
+                print('-'*len(xb))
                 print(xb)
-                print('in {} days it will be {} years'.format(results[i][2], results[i][3]))
-                list_name.append(results[i][0])
+                print('in {} days it will be {} years'.format(item[2], item[3]))
+                list_name.append(item[0])
             uc = input('enter name to delete: ')
             if uc == 'q':
                 main()
@@ -291,7 +289,7 @@ def main():
                         print('wrong password')
                     else:
                         break
-            sql =("""DELETE FROM users WHERE name = ?""")
+            sql = """DELETE FROM users WHERE name = ?"""
             cursor.execute(
                 sql, (uc,))
             conn.commit()
@@ -309,7 +307,7 @@ def main():
                 if uc_name == 'q':
                     main()
                 # проверка на повторение
-                sql = ('SELECT COUNT(name) FROM users WHERE name = ?')
+                sql = 'SELECT COUNT(name) FROM users WHERE name = ?'
                 cursor.execute(sql, (uc_name,))
                 results = cursor.fetchone()
                 lol = results[0]
@@ -328,7 +326,7 @@ def main():
                             main()
                         # проверка на повторение
                         cursor.execute("PRAGMA key={}".format(account_pass))
-                        sql = ('SELECT COUNT(name) FROM users WHERE name = ?')
+                        sql = 'SELECT COUNT(name) FROM users WHERE name = ?'
                         cursor.execute(sql, (user_name,))
                         results = cursor.fetchone()
                         lol = results[0]
@@ -342,7 +340,8 @@ def main():
                             main()
                         try:
                             conn.close
-                            cursor.execute("PRAGMA key={}".format(account_pass))
+                            cursor.execute(
+                                "PRAGMA key={}".format(account_pass))
                             cursor.execute('SELECT COUNT(name) FROM users')
                         except:
                             print('wrong password')
@@ -354,11 +353,13 @@ def main():
                     break
                 elif uc == '2':
                     while True:
-                        date_birthday = input('When is your birthday? [YYYY.MM.DD]: ')
+                        date_birthday = input(
+                            'When is your birthday? [YYYY.MM.DD]: ')
                         if date_birthday == 'q':
                             main()
                         try:
-                            date_birthday = datetime.strptime(date_birthday, '%Y.%m.%d').date()
+                            date_birthday = datetime.strptime(
+                                date_birthday, '%Y.%m.%d').date()
                             if date_birthday == 'q':
                                 main()
                         except ValueError:
@@ -371,7 +372,8 @@ def main():
                             main()
                         try:
                             conn.close
-                            cursor.execute("PRAGMA key={}".format(account_pass))
+                            cursor.execute(
+                                "PRAGMA key={}".format(account_pass))
                             cursor.execute('SELECT COUNT(name) FROM users')
                         except:
                             print('wrong password')
@@ -416,10 +418,10 @@ def main():
                     else strftime('%Y-', 'now') - strftime('%Y-', bday) + '1 year'
                 end
             ) as int) as year_after_bday from users order by tillbday""")
-            results = cursor.fetchall()
+            results = numpy.array(cursor.fetchall(), dtype=str)
             dr_in_this_year = 0
-            for item in results:
-                if (year - item[0]) > item[0]:
+            for i in results:
+                if (year - int(i[0])) < int(i[0]):
                     dr_in_this_year += 1
             print('total people: ' + str(results2[0]))
             mas_year = list(int(i[1]) - 1 for i in results)
@@ -476,20 +478,23 @@ def main():
                                 else strftime('%Y-', 'now') - strftime('%Y-', bday) + '1 year'
                             end
                         ) as int) as year_after_bday from users order by tillbday""")
-                        results = cursor.fetchall()
+                        results = numpy.array(cursor.fetchall(), dtype=str)
                         birth_in_mounth = 0
                         now = datetime.now()
                         mounth = calendar.monthrange(now.year, now.month)[1]
                         for i in results:
-                            if (int(mounth) - i[2]) > i[2]:
+                            if (int(mounth) - int(i[2])) > int(i[2]):
                                 birth_in_mounth += 1
-                            print('this month birthday: ' + str(birth_in_mounth))
-                        for i in results:
-                            if i[2] <= 31:
-                                xb = ('name: ' + str(i[0]) + ' date of birth: ' + str(i[1]).replace('-','.'))
+                            print('this month birthday: ' +
+                                  str(birth_in_mounth))
+                        for item in results:
+                            if int(item[2]) <= 31:
+                                xb = (
+                                    'name: ' + item[0] + ' date of birth: ' + item[1].replace('-', '.'))
                                 print('-'*int(len(xb)))
                                 print(xb)
-                                print('in {} days it will be {} years'.format(i[2], i[3]))
+                                print(
+                                    'in {} days it will be {} years'.format(item[2], item[3]))
                         # end soon dr
                         main()
                     elif uc == 'q':
@@ -518,10 +523,12 @@ def main():
                 while True:
                     if new_account_pass_1 and new_account_pass_2 == account_pass:
                         print('valid password entered')
-                        new_account_pass_1 = getpass.getpass('enter new password: ')
+                        new_account_pass_1 = getpass.getpass(
+                            'enter new password: ')
                         if new_account_pass_1 == 'q':
                             main()
-                        new_account_pass_2 = getpass.getpass('repeat new password: ')
+                        new_account_pass_2 = getpass.getpass(
+                            'repeat new password: ')
                     elif new_account_pass_1 == new_account_pass_2:
                         account_pass = new_account_pass_1
                         break
@@ -547,6 +554,9 @@ def main():
 
 
 if(__name__ == '__main__'):
+    from pyfiglet import Figlet
+    f = Figlet(font='slant')
+    print(f.renderText('Bot DR'))
     print("enter q to go to the main menu")
     vhod()
     # soon dr
@@ -564,19 +574,20 @@ if(__name__ == '__main__'):
                 else strftime('%Y-', 'now') - strftime('%Y-', bday) + '1 year'
             end
         ) as int) as year_after_bday from users order by tillbday""")
-    results = cursor.fetchall()
+    results = numpy.array(cursor.fetchall(), dtype=str)
     birth_in_mounth = 0
     now = datetime.now()
     mounth = calendar.monthrange(now.year, now.month)[1]
     for i in results:
-        if (int(mounth) - i[2]) > i[2]:
+        if (int(mounth) - int(i[2])) > int(i[2]):
             birth_in_mounth += 1
     print('this month birthday: ' + str(birth_in_mounth))
-    for i in results:
-        if i[2] <= 31:
-            xb = ('name: ' + str(i[0]) + ' date of birth: ' + str(i[1]).replace('-','.'))
+    for item in results:
+        if int(item[2]) <= 31:
+            xb = ('name: ' + item[0] + ' date of birth: ' +
+                  item[1].replace('-', '.'))
             print('-'*int(len(xb)))
             print(xb)
-            print('in {} days it will be {} years'.format(i[2], i[3]))
+            print('in {} days it will be {} years'.format(item[2], item[3]))
     # end soon dr
     main()
