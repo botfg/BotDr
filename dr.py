@@ -19,9 +19,17 @@ import getpass
 import os
 import sys
 from datetime import date, datetime
+import csv
 
 import numpy
 from pysqlcipher3 import dbapi2 as sqlite
+
+
+def csv_writer(data, path):
+    with open(path, "w", newline='') as csv_file:
+        writer = csv.writer(csv_file, delimiter=',')
+        for line in data:
+            writer.writerow(line)
 
 
 def vhod():
@@ -433,8 +441,8 @@ def main():
         main()
     elif usercomand == '7':  # 7-account actions
         while True:
-            uc = input('1-delete account 2-Change Password 3-sign out: ')
-            if uc == '3':  # 3-sign out
+            uc = input('1-delete account 2-Change Password 3-export 4-sign out: ')
+            if uc == '4':  # 3-sign out
                 conn.close
                 vhod()
                 break
@@ -542,6 +550,26 @@ def main():
                             'repeat new password: ')
                 cursor.execute('PRAGMA rekey={}'.format(account_pass))
                 break
+            elif uc == '3': # export csv
+                while True:
+                    account_pass = getpass.getpass('enter password: ')
+                    try:
+                        conn.close
+                        cursor.execute("PRAGMA key={}".format(account_pass))
+                        cursor.execute("select name, bday from users")
+                    except:
+                        print('wrong password')
+                    else:
+                        break
+                results = numpy.array(cursor.fetchall(), dtype=str)
+                if len(results) == 0:
+                    print('no person')
+                    main()
+                with open(account_name + '.csv', "w", newline='') as csv_file:
+                    writer = csv.writer(csv_file, delimiter=',')
+                    for line in results:
+                        writer.writerow(line)
+                main()
             else:
                 print('wrong command')
         main()
