@@ -116,6 +116,7 @@ def vhod():
 
 
 def main():
+    import pyAesCrypt
     global account_name, account_pass, cursor, conn
     option_bar = '1-Add 2-view 3-remove person 4-delete all person 5-edit 6-statistics 7-account actions 9-exit: '
     width = len(option_bar) + 1
@@ -564,53 +565,141 @@ def main():
                     if uc == 'q':
                         main()
                     elif uc == '1': # export
-                        cursor.execute("select name, bday from users")
-                        results = numpy.array(cursor.fetchall(), dtype=str)
-                        if len(results) == 0:
-                            print('no person')
-                            main()
-                        with open(account_name + '.csv', "w", newline='') as csv_file:
-                            writer = csv.writer(csv_file, delimiter=',')
-                            for line in results:
-                                writer.writerow(line)
-                        main()
-                    elif uc == '2': # import
-                        while True: # проверка файла на существование
-                            file = input('enter csv file: ')
-                            if file == 'q':
+                        while True:
+                            uc = input('encrypt export file? [Y/n]: ')
+                            if uc == 'q':
                                 main()
-                            x1 = os.path.isfile(file)
-                            if x1:
-                                if file.endswith('.csv'):
-                                    break
-                                elif not file.endswith('.csv'):
-                                    print('не csv файл')
-                            if not x1:
-                                print('нет файла')
-                        cursor.execute("select name, bday from users")
-                        results = numpy.array(cursor.fetchall(), dtype=str)
-                        with open(file, "r") as f_obj:
-                            reader = csv.reader(f_obj)
-                            not_normal_csv = list()
-                            for row in reader:
-                                if len(row) == 2:
-                                    if row[0] in results:
-                                        not_normal_csv.append(row)
-                                        continue
-                                    try:
-                                        date_birthday = datetime.strptime(row[1], '%Y-%m-%d').date()
-                                    except ValueError:
-                                        not_normal_csv.append(row)
+                            elif uc == 'n':
+                                cursor.execute("select name, bday from users")
+                                results = numpy.array(cursor.fetchall(), dtype=str)
+                                if len(results) == 0:
+                                    print('no person')
+                                    main()
+                                with open(account_name + '.csv', "w", newline='') as csv_file:
+                                    writer = csv.writer(csv_file, delimiter=',')
+                                    for line in results:
+                                        writer.writerow(line)
+                                main()
+                            elif uc == 'Y':
+                                while True:
+                                    password_1 = getpass.getpass('enter password for export file: ')
+                                    if password_1 == 'q':
+                                        main()
+                                    password_2 = getpass.getpass('repeat password for export file: ')
+                                    if password_2 == 'q':
+                                        main()
+                                    if str(password_1) == str(password_2):
+                                        password = str(password_2)
+                                        break
                                     else:
-                                        cursor.execute("insert into users(name, bday) values (?, ?)", (row[0], date_birthday))
+                                        print('different password')                   
+                                cursor.execute("select name, bday from users")
+                                results = numpy.array(cursor.fetchall(), dtype=str)
+                                if len(results) == 0:
+                                    print('no person')
+                                    main()
+                                file = (account_name + '.csv')
+                                with open(file, "w", newline='') as csv_file:
+                                    writer = csv.writer(csv_file, delimiter=',')
+                                    for line in results:
+                                        writer.writerow(line)
+                                buffer_size1 = 512 * 2048
+                                pyAesCrypt.encryptFile(file, str(file + '.aes'), password, buffer_size1)
+                                os.remove(file)
+                                main()
+                            else:
+                                print('wrong command')
+                    elif uc == '2': # import
+                        uc = input('is the file encrypted? [Y/n]: ')
+                        if uc == 'q':
+                            main
+                        elif uc == 'n':
+                            while True: # проверка файла на существование
+                                file = input('enter csv file: ')
+                                if file == 'q':
+                                    main()
+                                x1 = os.path.isfile(file)
+                                if x1:
+                                    if file.endswith('.csv'):
+                                        break
+                                    elif not file.endswith('.csv'):
+                                        print('this is not a csv file')
+                                if not x1:
+                                    print('file missing')
+                            cursor.execute("select name, bday from users")
+                            results = numpy.array(cursor.fetchall(), dtype=str)
+                            with open(file, "r") as f_obj:
+                                reader = csv.reader(f_obj)
+                                not_normal_csv = list()
+                                for row in reader:
+                                    if len(row) == 2:
+                                        if row[0] in results:
+                                            not_normal_csv.append(row)
+                                            continue
+                                        try:
+                                            date_birthday = datetime.strptime(row[1], '%Y-%m-%d').date()
+                                        except ValueError:
+                                            not_normal_csv.append(row)
+                                        else:
+                                            cursor.execute("insert into users(name, bday) values (?, ?)", (row[0], date_birthday))
+                                    else:
+                                        not_normal_csv.append(row)
+                            conn.commit()
+                            with open(account_name + '_not_normal_import.csv', "w", newline='') as csv_file:
+                                writer = csv.writer(csv_file, delimiter=',')
+                                for line in not_normal_csv:
+                                    writer.writerow(line)
+                            main()
+                        elif uc == 'Y':
+                            while True: # проверка файла на существование
+                                file = input('enter csv file: ')
+                                if file == 'q':
+                                    main()
+                                x1 = os.path.isfile(file)
+                                if x1:
+                                    if file.endswith('.csv.aes'):
+                                        break
+                                    elif not file.endswith('.csv.aes'):
+                                        print('this is not a csv file')
+                                if not x1:
+                                    print('file missing')
+                            buffer_size1 = 512 * 2048
+                            file2 = file[0:-4]
+                            while True:
+                                try:
+                                    password = getpass.getpass('enter password for export file: ')
+                                    pyAesCrypt.decryptFile(file, file2, password, buffer_size1)
+                                except:
+                                    print('wrong password')
                                 else:
-                                    not_normal_csv.append(row)
-                        conn.commit()
-                        with open(account_name + '_not_normal_import.csv', "w", newline='') as csv_file:
-                            writer = csv.writer(csv_file, delimiter=',')
-                            for line in not_normal_csv:
-                                writer.writerow(line)
-                        main()
+                                    break
+                            os.remove(file)
+                            cursor.execute("select name, bday from users")
+                            results = numpy.array(cursor.fetchall(), dtype=str)
+                            with open(file2, "r") as f_obj:
+                                reader = csv.reader(f_obj)
+                                not_normal_csv = list()
+                                for row in reader:
+                                    if len(row) == 2:
+                                        if row[0] in results:
+                                            not_normal_csv.append(row)
+                                            continue
+                                        try:
+                                            date_birthday = datetime.strptime(row[1], '%Y-%m-%d').date()
+                                        except ValueError:
+                                            not_normal_csv.append(row)
+                                        else:
+                                            cursor.execute("insert into users(name, bday) values (?, ?)", (row[0], date_birthday))
+                                    else:
+                                        not_normal_csv.append(row)
+                            conn.commit()
+                            with open(account_name + '_not_normal_import.csv', "w", newline='') as csv_file:
+                                writer = csv.writer(csv_file, delimiter=',')
+                                for line in not_normal_csv:
+                                    writer.writerow(line)
+                            main()
+                        else:
+                            print('wrong command')
                     else:
                         print('wrong command')
             else:
