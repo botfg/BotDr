@@ -25,13 +25,6 @@ import numpy
 from pysqlcipher3 import dbapi2 as sqlite
 
 
-def csv_writer(data, path):
-    with open(path, "w", newline='') as csv_file:
-        writer = csv.writer(csv_file, delimiter=',')
-        for line in data:
-            writer.writerow(line)
-
-
 def vhod():
     global account_name, account_pass, conn, cursor
     u_a = input('1-sign up 2-sign in 3-exit: ')
@@ -263,10 +256,12 @@ def main():
         if len(results) > 0:
             list_name = list()
             for item in results:
-                xb = ('name: ' + item[0] + ' date of birth: ' + item[1].replace('-', '.'))
+                xb = (
+                    'name: ' + item[0] + ' date of birth: ' + item[1].replace('-', '.'))
                 print('-'*len(xb))
                 print(xb)
-                print('in {} days it will be {} years'.format(item[2], item[3]))
+                print('in {} days it will be {} years'.format(
+                    item[2], item[3]))
                 list_name.append(item[0])
             uc = input('enter name to delete: ')
             if uc == 'q':
@@ -441,7 +436,8 @@ def main():
         main()
     elif usercomand == '7':  # 7-account actions
         while True:
-            uc = input('1-delete account 2-Change Password 3-export 4-sign out: ')
+            uc = input(
+                '1-delete account 2-Change Password 3-export/import csv 4-sign out: ')
             if uc == '4':  # 3-sign out
                 conn.close
                 vhod()
@@ -550,26 +546,73 @@ def main():
                             'repeat new password: ')
                 cursor.execute('PRAGMA rekey={}'.format(account_pass))
                 break
-            elif uc == '3': # export csv
+            elif uc == '3':  # export and import csv
                 while True:
-                    account_pass = getpass.getpass('enter password: ')
                     try:
+                        account_pass = getpass.getpass('enter password: ')
+                        if account_pass == 'q':
+                            main()
                         conn.close
                         cursor.execute("PRAGMA key={}".format(account_pass))
-                        cursor.execute("select name, bday from users")
+                        cursor.execute('SELECT COUNT(name) FROM users')
                     except:
                         print('wrong password')
                     else:
                         break
-                results = numpy.array(cursor.fetchall(), dtype=str)
-                if len(results) == 0:
-                    print('no person')
-                    main()
-                with open(account_name + '.csv', "w", newline='') as csv_file:
-                    writer = csv.writer(csv_file, delimiter=',')
-                    for line in results:
-                        writer.writerow(line)
-                main()
+                while True:
+                    uc = input('1-export 2-import: ')
+                    if uc == 'q':
+                        main()
+                    elif uc == '1': # export
+                        cursor.execute("select name, bday from users")
+                        results = numpy.array(cursor.fetchall(), dtype=str)
+                        if len(results) == 0:
+                            print('no person')
+                            main()
+                        with open(account_name + '.csv', "w", newline='') as csv_file:
+                            writer = csv.writer(csv_file, delimiter=',')
+                            for line in results:
+                                writer.writerow(line)
+                        main()
+                    elif uc == '2': # import
+                        while True: # проверка файла на существование
+                            file = input('enter csv file: ')
+                            if file == 'q':
+                                main()
+                            x1 = os.path.isfile(file)
+                            if x1:
+                                if file.endswith('.csv'):
+                                    break
+                                elif not file.endswith('.csv'):
+                                    print('не csv файл')
+                            if not x1:
+                                print('нет файла')
+                        cursor.execute("select name, bday from users")
+                        results = numpy.array(cursor.fetchall(), dtype=str)
+                        with open(file, "r") as f_obj:
+                            reader = csv.reader(f_obj)
+                            not_normal_csv = list()
+                            for row in reader:
+                                if len(row) == 2:
+                                    if row[0] in results:
+                                        not_normal_csv.append(row)
+                                        continue
+                                    try:
+                                        date_birthday = datetime.strptime(row[1], '%Y-%m-%d').date()
+                                    except ValueError:
+                                        not_normal_csv.append(row)
+                                    else:
+                                        cursor.execute("insert into users(name, bday) values (?, ?)", (row[0], date_birthday))
+                                else:
+                                    not_normal_csv.append(row)
+                        conn.commit()
+                        with open(account_name + '_not_normal_import.csv', "w", newline='') as csv_file:
+                            writer = csv.writer(csv_file, delimiter=',')
+                            for line in not_normal_csv:
+                                writer.writerow(line)
+                        main()
+                    else:
+                        print('wrong command')
             else:
                 print('wrong command')
         main()
