@@ -575,7 +575,15 @@ def main():
                                 if len(results) == 0:
                                     print('no person')
                                     main()
-                                with open(account_name + '.csv', "w", newline='') as csv_file:
+                                while True:
+                                    name_export = input('enter name export file: ')  
+                                    if name_export == 'q':
+                                        main()                 
+                                    if len(name_export) == 0:
+                                        print('incorrect name')
+                                    elif len(name_export) > 0:
+                                        break  
+                                with open(name_export + '.csv', "w", newline='') as csv_file:
                                     writer = csv.writer(csv_file, delimiter=',')
                                     for line in results:
                                         writer.writerow(line)
@@ -592,13 +600,21 @@ def main():
                                         password = str(password_2)
                                         break
                                     else:
-                                        print('different password')                   
+                                        print('different password')
+                                while True:
+                                    name_export = input('enter name export file: ')  
+                                    if name_export == 'q':
+                                        main()                 
+                                    if len(name_export) == 0:
+                                        print('incorrect name')
+                                    elif len(name_export) > 0:
+                                        break
                                 cursor.execute("select name, bday from users")
                                 results = numpy.array(cursor.fetchall(), dtype=str)
                                 if len(results) == 0:
                                     print('no person')
                                     main()
-                                file = (account_name + '.csv')
+                                file = (name_export + '.csv')
                                 with open(file, "w", newline='') as csv_file:
                                     writer = csv.writer(csv_file, delimiter=',')
                                     for line in results:
@@ -630,24 +646,24 @@ def main():
                             results = numpy.array(cursor.fetchall(), dtype=str)
                             with open(file, "r") as f_obj:
                                 reader = csv.reader(f_obj)
-                                not_normal_csv = list()
+                                incorrect_import_csv = list()
                                 for row in reader:
                                     if len(row) == 2:
                                         if row[0] in results:
-                                            not_normal_csv.append(row)
+                                            incorrect_import_csv.append(row)
                                             continue
                                         try:
                                             date_birthday = datetime.strptime(row[1], '%Y-%m-%d').date()
                                         except ValueError:
-                                            not_normal_csv.append(row)
+                                            incorrect_import_csv.append(row)
                                         else:
                                             cursor.execute("insert into users(name, bday) values (?, ?)", (row[0], date_birthday))
                                     else:
-                                        not_normal_csv.append(row)
+                                        incorrect_import_csv.append(row)
                             conn.commit()
-                            with open(account_name + '_not_normal_import.csv', "w", newline='') as csv_file:
+                            with open(account_name + 'incorrect_import.csv', "w", newline='') as csv_file:
                                 writer = csv.writer(csv_file, delimiter=',')
-                                for line in not_normal_csv:
+                                for line in incorrect_import_csv:
                                     writer.writerow(line)
                             main()
                         elif uc == 'Y':
@@ -678,24 +694,24 @@ def main():
                             results = numpy.array(cursor.fetchall(), dtype=str)
                             with open(file2, "r") as f_obj:
                                 reader = csv.reader(f_obj)
-                                not_normal_csv = list()
+                                incorrect_import_csv = list()
                                 for row in reader:
                                     if len(row) == 2:
                                         if row[0] in results:
-                                            not_normal_csv.append(row)
+                                            incorrect_import_csv.append(row)
                                             continue
                                         try:
                                             date_birthday = datetime.strptime(row[1], '%Y-%m-%d').date()
                                         except ValueError:
-                                            not_normal_csv.append(row)
+                                            incorrect_import_csv.append(row)
                                         else:
                                             cursor.execute("insert into users(name, bday) values (?, ?)", (row[0], date_birthday))
                                     else:
-                                        not_normal_csv.append(row)
+                                        incorrect_import_csv.append(row)
                             conn.commit()
-                            with open(account_name + '_not_normal_import.csv', "w", newline='') as csv_file:
+                            with open(account_name + 'incorrect_import.csv', "w", newline='') as csv_file:
                                 writer = csv.writer(csv_file, delimiter=',')
-                                for line in not_normal_csv:
+                                for line in incorrect_import_csv:
                                     writer.writerow(line)
                             main()
                         else:
