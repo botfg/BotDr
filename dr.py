@@ -13,15 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-import calendar
-import datetime
 import getpass
 import os
 import sys
-from datetime import date, datetime
-import csv
 
-import numpy
 from pysqlcipher3 import dbapi2 as sqlite
 
 
@@ -31,24 +26,32 @@ def vhod():
     if u_a == '3':
         sys.exit()
     elif u_a == '1':
-        account_name = input('login: ')
-        if account_name == 'q':
-            vhod()
         # check account_existence
         while True:
+            account_name = input('login: ')
+            if account_name == 'q':
+                vhod()
+            elif len(account_name) < 4:
+                print('login length must be more than 3 characters')
+            else:
+                break
             x1 = os.path.isfile(account_name + '.db')
             if x1:
                 print('an account with that name already exists')
-                account_name = input('login: ')
-                if account_name == 'q':
-                    vhod()
             elif not x1:
                 break
         # end check account_existence
-        password1 = getpass.getpass('enter password: ')
-        if password1 == 'q':
-            vhod()
+        while True:
+            password1 = getpass.getpass('enter password: ')
+            if password1 == 'q':
+                vhod()
+            elif password1 == account_name:
+                print('login cannot be a password')
+            else:
+                break
         password2 = getpass.getpass('repeat password: ')
+        if password2 == 'q':
+            vhod()
         while True:
             if password1 == password2:
                 account_pass = password1
@@ -115,8 +118,49 @@ def vhod():
         vhod()
 
 
+def soon_BirthDay():
+    import calendar
+    import datetime
+    from datetime import date, datetime
+    import numpy
+    cursor.execute("PRAGMA key={}".format(account_pass))
+    cursor.execute("""select name, bday, cast (julianday(
+            case
+                when strftime('%m-%d', bday) < strftime('%m-%d', 'now')
+                then strftime('%Y-', 'now', '+1 year')
+                else strftime('%Y-', 'now')
+            end || strftime('%m-%d', bday)
+        )-julianday('now') as int) as tillbday, cast (julianday(
+            case
+                when strftime('%m-%d', bday) > strftime('%m-%d', 'now')
+                then strftime('%Y-', 'now') - strftime('%Y-', bday)
+                else strftime('%Y-', 'now') - strftime('%Y-', bday) + '1 year'
+            end
+        ) as int) as year_after_bday from users order by tillbday""")
+    results = numpy.array(cursor.fetchall(), dtype=str)
+    birth_in_mounth = 0
+    now = datetime.now()
+    mounth = calendar.monthrange(now.year, now.month)[1]
+    for i in results:
+        if (int(mounth) - int(i[2])) > int(i[2]):
+            birth_in_mounth += 1
+    print('this month birthday: ' + str(birth_in_mounth))
+    for item in results:
+        if int(item[2]) <= 31:
+            xb = ('name: ' + item[0] + ' date of birth: ' +
+                  item[1].replace('-', '.'))
+            print('-'*int(len(xb)))
+            print(xb)
+            print('in {} days it will be {} years'.format(item[2], item[3]))
+
+
 def main():
+    import csv
+    import numpy
     import pyAesCrypt
+    import calendar
+    import datetime
+    from datetime import date, datetime
     global account_name, account_pass, cursor, conn
     option_bar = '1-Add 2-view 3-remove person 4-delete all person 5-edit 6-statistics 7-account actions 9-exit: '
     width = len(option_bar) + 1
@@ -467,39 +511,7 @@ def main():
                         os.remove(account_name + '.db')
                         print("write q to go back")
                         vhod()
-                        # soon dr
-                        cursor.execute("PRAGMA key={}".format(account_pass))
-                        cursor.execute("""select name, bday, cast (julianday(
-                            case
-                                when strftime('%m-%d', bday) < strftime('%m-%d', 'now')
-                                then strftime('%Y-', 'now', '+1 year')
-                                else strftime('%Y-', 'now')
-                            end || strftime('%m-%d', bday)
-                        )-julianday('now') as int) as tillbday, cast (julianday(
-                            case
-                                when strftime('%m-%d', bday) > strftime('%m-%d', 'now')
-                                then strftime('%Y-', 'now') - strftime('%Y-', bday)
-                                else strftime('%Y-', 'now') - strftime('%Y-', bday) + '1 year'
-                            end
-                        ) as int) as year_after_bday from users order by tillbday""")
-                        results = numpy.array(cursor.fetchall(), dtype=str)
-                        birth_in_mounth = 0
-                        now = datetime.now()
-                        mounth = calendar.monthrange(now.year, now.month)[1]
-                        for i in results:
-                            if (int(mounth) - int(i[2])) > int(i[2]):
-                                birth_in_mounth += 1
-                            print('this month birthday: ' +
-                                  str(birth_in_mounth))
-                        for item in results:
-                            if int(item[2]) <= 31:
-                                xb = (
-                                    'name: ' + item[0] + ' date of birth: ' + item[1].replace('-', '.'))
-                                print('-'*int(len(xb)))
-                                print(xb)
-                                print(
-                                    'in {} days it will be {} years'.format(item[2], item[3]))
-                        # end soon dr
+                        soon_BirthDay()
                         main()
                     elif uc == 'q':
                         break
@@ -518,9 +530,14 @@ def main():
                         print('wrong password')
                     else:
                         break
-                new_account_pass_1 = getpass.getpass('enter new pass: ')
-                if new_account_pass_1 == 'q':
-                    main()
+                while True:
+                    new_account_pass_1 = getpass.getpass('enter password: ')
+                    if new_account_pass_1 == 'q':
+                        main()
+                    elif new_account_pass_1 == account_name:
+                        print('login cannot be a password')
+                    else:
+                        break
                 new_account_pass_2 = getpass.getpass('repeat new pass: ')
                 if new_account_pass_2 == 'q':
                     main()
@@ -734,35 +751,5 @@ if(__name__ == '__main__'):
     print(f.renderText('Bot DR'))
     print("enter q to go to the main menu")
     vhod()
-    # soon dr
-    cursor.execute("PRAGMA key={}".format(account_pass))
-    cursor.execute("""select name, bday, cast (julianday(
-            case
-                when strftime('%m-%d', bday) < strftime('%m-%d', 'now')
-                then strftime('%Y-', 'now', '+1 year')
-                else strftime('%Y-', 'now')
-            end || strftime('%m-%d', bday)
-        )-julianday('now') as int) as tillbday, cast (julianday(
-            case
-                when strftime('%m-%d', bday) > strftime('%m-%d', 'now')
-                then strftime('%Y-', 'now') - strftime('%Y-', bday)
-                else strftime('%Y-', 'now') - strftime('%Y-', bday) + '1 year'
-            end
-        ) as int) as year_after_bday from users order by tillbday""")
-    results = numpy.array(cursor.fetchall(), dtype=str)
-    birth_in_mounth = 0
-    now = datetime.now()
-    mounth = calendar.monthrange(now.year, now.month)[1]
-    for i in results:
-        if (int(mounth) - int(i[2])) > int(i[2]):
-            birth_in_mounth += 1
-    print('this month birthday: ' + str(birth_in_mounth))
-    for item in results:
-        if int(item[2]) <= 31:
-            xb = ('name: ' + item[0] + ' date of birth: ' +
-                  item[1].replace('-', '.'))
-            print('-'*int(len(xb)))
-            print(xb)
-            print('in {} days it will be {} years'.format(item[2], item[3]))
-    # end soon dr
+    soon_BirthDay()
     main()
