@@ -73,7 +73,7 @@ def vhod():
                 cursor = conn.cursor()
                 cursor.execute("PRAGMA key={}".format(account_pass))
                 cursor.execute("""CREATE TABLE users
-                    ( name text, bday datetime)
+                    ( name text NOT NULL, bday datetime NOT NULL)
                         """)
                 conn.commit()
                 break
@@ -142,8 +142,7 @@ def main():
             main()
         while True:
             try:
-                date_birthday = datetime.strptime(
-                    date_birthday, '%Y.%m.%d').date()
+                date_birthday = datetime.strptime(date_birthday, '%Y.%m.%d').date()
                 if date_birthday == 'q':
                     main()
             except ValueError:
@@ -171,7 +170,7 @@ def main():
         cursor.execute("PRAGMA key={}".format(account_pass))
         cursor.execute('SELECT name FROM users')
         results = numpy.array(cursor.fetchall(), dtype=str)
-        if len(results) == 0:
+        if results.size == 0:
             print('no person')
             main()
         cursor.execute("""select name, bday, cast (julianday(
@@ -211,10 +210,10 @@ def main():
             end
         ) as int) as year_after_bday from users order by tillbday""")
         results = numpy.array(cursor.fetchall(), dtype=str)
-        if len(results) == 0:
+        if results.size == 0:
             print('no person')
             main()
-        elif len(results) > 0:
+        elif results.size > 0:
             cursor.close
             while True:
                 uc = input('delete all person? [Y/n]: ')
@@ -254,7 +253,7 @@ def main():
             end
         ) as int) as year_after_bday from users order by tillbday""")
         results = numpy.array(cursor.fetchall(), dtype=str)
-        if len(results) > 0:
+        if results.size > 0:
             list_name = list()
             for item in results:
                 xb = (
@@ -298,7 +297,7 @@ def main():
                 sql, (uc,))
             conn.commit()
             main()
-        elif len(results) == 0:
+        elif results.size == 0:
             print('no person')
         main()
     elif usercomand == '5':  # 5-edit
@@ -572,7 +571,7 @@ def main():
                             elif uc == 'n':
                                 cursor.execute("select name, bday from users")
                                 results = numpy.array(cursor.fetchall(), dtype=str)
-                                if len(results) == 0:
+                                if results.size == 0:
                                     print('no person')
                                     main()
                                 while True:
@@ -611,7 +610,7 @@ def main():
                                         break
                                 cursor.execute("select name, bday from users")
                                 results = numpy.array(cursor.fetchall(), dtype=str)
-                                if len(results) == 0:
+                                if results.size == 0:
                                     print('no person')
                                     main()
                                 file = (name_export + '.csv')
