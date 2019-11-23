@@ -17,10 +17,9 @@ import getpass
 import os
 import sys
 
-from pysqlcipher3 import dbapi2 as sqlite
-
 
 def vhod():
+    from pysqlcipher3 import dbapi2 as sqlite
     global account_name, account_pass, conn, cursor
     u_a = input('1-sign up 2-sign in 3-exit: ')
     if u_a == '3':
@@ -31,10 +30,9 @@ def vhod():
             account_name = input('login: ')
             if account_name == 'q':
                 vhod()
-            elif len(account_name) < 4:
+            elif len(account_name) < 3:
                 print('login length must be more than 3 characters')
-            else:
-                break
+                continue
             x1 = os.path.isfile(account_name + '.db')
             if x1:
                 print('an account with that name already exists')
@@ -122,6 +120,7 @@ def soon_BirthDay():
     import calendar
     import datetime
     from datetime import date, datetime
+    from pysqlcipher3 import dbapi2 as sqlite
     import numpy
     cursor.execute("PRAGMA key={}".format(account_pass))
     cursor.execute("""select name, bday, cast (julianday(
@@ -161,6 +160,7 @@ def main():
     import calendar
     import datetime
     from datetime import date, datetime
+    from pysqlcipher3 import dbapi2 as sqlite
     global account_name, account_pass, cursor, conn
     option_bar = '1-Add 2-view 3-remove person 4-delete all person 5-edit 6-statistics 7-account actions 9-exit: '
     width = len(option_bar) + 1
