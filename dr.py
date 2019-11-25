@@ -13,13 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
+import calendar
+import csv
 import getpass
 import os
 import sys
+from datetime import date, datetime
+
+import numpy
+import pyAesCrypt
+from pyfiglet import Figlet
+from pysqlcipher3 import dbapi2 as sqlite
 
 
 def vhod():
-    from pysqlcipher3 import dbapi2 as sqlite
     global account_name, account_pass, conn, cursor
     u_a = input('1-sign up 2-sign in 3-exit: ')
     if u_a == '3':
@@ -117,11 +124,6 @@ def vhod():
 
 
 def soon_BirthDay():
-    import calendar
-    import datetime
-    from datetime import date, datetime
-    from pysqlcipher3 import dbapi2 as sqlite
-    import numpy
     cursor.execute("PRAGMA key={}".format(account_pass))
     cursor.execute("""select name, bday, cast (julianday(
             case
@@ -154,15 +156,8 @@ def soon_BirthDay():
 
 
 def main():
-    import csv
-    import numpy
-    import pyAesCrypt
-    import calendar
-    import datetime
-    from datetime import date, datetime
-    from pysqlcipher3 import dbapi2 as sqlite
     global account_name, account_pass, cursor, conn
-    option_bar = '1-Add 2-view 3-remove person 4-delete all person 5-edit 6-statistics 7-account actions 9-exit: '
+    option_bar = '1-Add 2-view 3-remove person 4-delete all person 5-edit 6-statistics 7-account actions 8-exit: '
     width = len(option_bar) + 1
     print('-'*int(width))
     usercomand = input(option_bar)
@@ -214,7 +209,7 @@ def main():
         cursor.execute("PRAGMA key={}".format(account_pass))
         cursor.execute('SELECT name FROM users')
         results = numpy.array(cursor.fetchall(), dtype=str)
-        if results.size == 0:
+        if not results:
             print('no person')
             main()
         cursor.execute("""select name, bday, cast (julianday(
@@ -254,7 +249,7 @@ def main():
             end
         ) as int) as year_after_bday from users order by tillbday""")
         results = numpy.array(cursor.fetchall(), dtype=str)
-        if results.size == 0:
+        if not results.size:
             print('no person')
             main()
         elif results.size > 0:
@@ -297,7 +292,7 @@ def main():
             end
         ) as int) as year_after_bday from users order by tillbday""")
         results = numpy.array(cursor.fetchall(), dtype=str)
-        if results.size > 0:
+        if results.size:
             list_name = list()
             for item in results:
                 xb = (
@@ -341,7 +336,7 @@ def main():
                 sql, (uc,))
             conn.commit()
             main()
-        elif results.size == 0:
+        elif not results:
             print('no person')
         main()
     elif usercomand == '5':  # 5-edit
@@ -737,7 +732,7 @@ def main():
             else:
                 print('wrong command')
         main()
-    elif usercomand == '9':  # 9-exit
+    elif usercomand == '8':  # 8-exit
         cursor.close()
         sys.exit()
     else:
@@ -746,7 +741,6 @@ def main():
 
 
 if(__name__ == '__main__'):
-    from pyfiglet import Figlet
     f = Figlet(font='slant')
     print(f.renderText('Bot DR'))
     print("enter q to go to the main menu")
