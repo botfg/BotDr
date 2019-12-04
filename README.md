@@ -8,7 +8,7 @@
 * ##### Accounts are portable and encrypted
 
 
-### Installation [Linux](https://wikipedia.org/wiki/Linux) [![alt tag](http://icons.iconarchive.com/icons/dakirby309/simply-styled/32/OS-Linux-icon.png)](https://fr.wikipedia.org/wiki/Linux)
+### Installation [Linux](https://wikipedia.org/wiki/Linux) [![alt tag](http://icons.iconarchive.com/icons/dakirby309/simply-styled/32/OS-Linux-icon.png)](https://wikipedia.org/wiki/Linux)
 
 ```bash
 git clone https://github.com/botfg/BotDr.git
