@@ -1,3 +1,4 @@
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg?style=flat-square)](https://github.com/botfg/BotDr/blob/master/LICENSE)  [![Python3](https://img.shields.io/badge/Python-3-green.svg?style=flat-square)]()
 # <center> BotDr </center>
 #### BotDr - python3 console script for working with birthday dates supporting local accounts
 
@@ -7,11 +8,21 @@
 * ##### Accounts are portable and encrypted
 
 
-### Install
-* #### git clone https://github.com/botfg/BotDr.git
-* #### cd BotDr
-* #### sudo apt install sqlcipher libsqlcipher0 libsqlcipher-dev
-* #### pip3 install -r requirements.txt
+### Installation [Linux](https://wikipedia.org/wiki/Linux) [![alt tag](http://icons.iconarchive.com/icons/dakirby309/simply-styled/32/OS-Linux-icon.png)](https://fr.wikipedia.org/wiki/Linux)
+
+```bash
+git clone https://github.com/botfg/BotDr.git
+```
+```bash
+cd BotDr
+```
+```bash
+sudo apt install sqlcipher libsqlcipher0 
+libsqlcipher-dev
+```
+```bash
+pip3 install -r requirements.txt
+```
 
 #### License: [Apache License 2.0](https://apache.org/licenses/LICENSE-2.0.txt)
 
