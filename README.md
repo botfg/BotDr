@@ -1,4 +1,4 @@
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg?style=flat-square)](https://github.com/botfg/BotDr/blob/master/LICENSE)  [![Python3](https://img.shields.io/badge/Python-3-green.svg?style=flat-square)]()
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg?style=flat-square)](https://github.com/botfg/BotDr/blob/master/LICENSE)  [![Python3](https://img.shields.io/badge/Python-3-green.svg?style=flat-square)](https://www.python.org/downloads/)
 # <center> BotDr </center>
 #### BotDr - python3 console script for working with birthday dates supporting local accounts
 
