@@ -52,12 +52,19 @@ botdrlogo = (color.OKGREEN + '''
 def clearScr():
     os.system('clear')
 
+
+def dec(string):
+    length_string = (44 - len(string)) // 2     # 34
+    decor = str((length_string * '-') + string + (length_string * '-') + '\n')
+    return decor
+
 def vhod():
     global account_name, account_pass, conn, cursor
     clearScr()
     print(botdrlogo)
     print('enter Q to go to the main menu\n')
-    print('---------------' + color.RED + 'Login' + color.END + '---------------\n')
+    #print('---------------' + color.RED + 'Login' + color.END + '--------------\n')
+    print(dec(color.RED + 'Login' + color.END))
     print(color.RED +'1' + color.END + ')--' + color.OKBLUE + 'sign up' + color.END)
     print(color.RED +'2' + color.END + ')--' + color.OKBLUE + 'sign in' + color.END)
     print(color.RED +'3' + color.END + ')--' + color.OKBLUE + 'exit\n' + color.END)
@@ -68,7 +75,7 @@ def vhod():
     elif u_a == '1':
         clearScr()
         print(botdrlogo)
-        print('---------------' + color.RED + 'sign up' + color.END + '---------------\n')
+        print(dec(color.RED + 'sign up' + color.END))
         # check account_existence
         while True:
             account_name = input(color.OKBLUE + 'login: ' + color.END)
@@ -127,7 +134,7 @@ def vhod():
     elif u_a == '2':
         clearScr()
         print(botdrlogo)
-        print('---------------' + color.RED + 'sign in' + color.END + '---------------\n')
+        print(dec(color.RED + 'sign in' + color.END))
         # check account_existence
         while True:
             account_name = input(color.OKBLUE + 'login: ' + color.END)
@@ -148,7 +155,7 @@ def vhod():
         cursor = conn.cursor()
         clearScr()
         print(botdrlogo)
-        print('---------------' + color.RED + 'sign in ' + color.END + account_name + '---------------\n')
+        print(dec(color.RED + 'sign in ' + color.END + account_name))
         while True:
             try:
                 account_pass = getpass.getpass(color.OKBLUE + 'enter password: ' + color.END)
@@ -169,7 +176,7 @@ def main():
     global account_name, account_pass, cursor, conn
     clearScr()
     print(botdrlogo)
-    print('---------------' + color.RED + 'options' + color.END + '---------------\n')
+    print(dec(color.RED + 'options' + color.END))
     # soon dr
     cursor.execute("""select name, bday, cast (julianday(
             case
@@ -191,10 +198,10 @@ def main():
     for i in results:
         if (int(mounth) - int(i[2])) > int(i[2]):
             birth_in_mounth += 1
-    print(color.WARNING + 'This month birthday: ' + color.END + str(birth_in_mounth) + color.RED + ' dr' + color.END + ')--' + color.OKBLUE +  'YIEW' + color.END)
+    print(color.RED + 'dr' + color.END + ')--' + color.OKBLUE +  'YIEW This month birthday: ' + color.END + str(birth_in_mounth))
     # end soon dr
     print(color.RED + '\n1' + color.END + ')--' + color.OKBLUE + 'ADD' + color.END)
-    print(color.RED + '2' + color.END + ')--' + color.OKBLUE + 'YIEW' + color.END + '(' + str(len(results)) +')')
+    print(color.RED + '2' + color.END + ')--' + color.OKBLUE + 'YIEW: ' + color.END + str(len(results)))
     print(color.RED + '3' + color.END + ')--' + color.OKBLUE + 'DELETE' + color.OKBLUE)
     print(color.RED + '4' + color.END + ')--' + color.OKBLUE + 'DELETE ALL' + color.END)
     print(color.RED + '5' + color.END + ')--' + color.OKBLUE + 'EDIT' + color.END)
@@ -205,7 +212,7 @@ def main():
     clearScr()
     if usercomand == "dr":
         print(botdrlogo)
-        print('---------------' + color.RED + 'Birthday in this month: ' + color.END + str(birth_in_mounth) + '---------------')      
+        print(dec(color.RED + 'Birthday in this month: ' + color.END + str(birth_in_mounth))) 
         cursor.execute("""select name, bday, cast (julianday(
             case
                 when strftime('%m-%d', bday) < strftime('%m-%d', 'now')
@@ -228,18 +235,17 @@ def main():
                 birth_in_mounth += 1
         for item in results:
             if int(item[2]) <= int(mounth):      
-                print('')
                 print(color.OKBLUE + 'Name: ' + color.END + item[0] + color.OKBLUE + ' date of birth: ' + color.END + item[1].replace('-', '.'))
-                print(color.OKBLUE + 'In ' + color.END + item[2] + color.OKBLUE + ' days it will be ' + color.END + item[3] + color.OKBLUE + ' years' + color.END)
+                print(color.OKBLUE + 'In ' + color.END + item[2] + color.OKBLUE + ' days it will be ' + color.END + item[3] + color.OKBLUE + ' years\n' + color.END)
             while True:
-                print(color.RED + '\nQ)--GO BACK\n' + color.END)
+                print(color.RED + 'Q)--GO BACK\n' + color.END)
                 uc = input(botdrPrompt)
                 if uc == 'Q':
                     main()
                     break
     elif usercomand == "1":  # 1-Add
         print(botdrlogo)
-        print('---------------' + color.RED + 'Add' + color.END + '---------------\n')
+        print(dec(color.RED + 'Add' + color.END))
         while True:
             user_name = input(color.OKBLUE + 'Enter name: ' + color.END)
             if user_name == 'Q':
@@ -256,7 +262,7 @@ def main():
                 print(color.RED + 'Name already exists' + color.END)
         clearScr()
         print(botdrlogo)
-        print('---------------' + color.RED + 'Add:' + color.END + user_name + '---------------\n')
+        print(dec(color.RED + 'Add:' + color.END + user_name))
         date_birthday = input(color.OKBLUE + 'When is your birthday?' + color.END + '[YYYY.MM.DD]: ')
         if date_birthday == 'Q':
             main()
@@ -307,20 +313,19 @@ def main():
             end
         ) as int) as year_after_bday from users order by tillbday""")
         results = numpy.array(cursor.fetchall(), dtype=str)
-        print('---------------' + color.RED + 'View' + color.END + '---------------')
+        print(dec(color.RED + 'View' + color.END))
         for item in results:
-            print('')
             print(color.OKBLUE + 'Name: ' + color.END + item[0] + color.OKBLUE + ' date of birth: ' + color.END + item[1].replace('-', '.'))
-            print(color.OKBLUE + 'In ' + color.END + item[2] + color.OKBLUE + ' days it will be ' + color.END + item[3] + color.OKBLUE + ' years' + color.END)
+            print(color.OKBLUE + 'In ' + color.END + item[2] + color.OKBLUE + ' days it will be ' + color.END + item[3] + color.OKBLUE + ' years\n' + color.END)
         while True:
-            print(color.RED + '\nQ)--GO BACK\n' + color.END)
+            print(color.RED + 'Q)--GO BACK\n' + color.END)
             uc = input(botdrPrompt)
             if uc == 'Q':
                 main()
                 break
     elif usercomand == '4':  # 4-delete all person
         print(botdrlogo)
-        print('---------------' + color.RED + 'Delete all' + color.END + '---------------\n')
+        print(dec(color.RED + 'Delete all' + color.END))
         cursor.execute("PRAGMA key={}".format(account_pass))
         cursor.execute("""select name, bday, cast (julianday(
             case
@@ -364,7 +369,7 @@ def main():
             main()
     elif usercomand == '3':  # 3-delete person
         print(botdrlogo)
-        print('---------------' + color.RED + 'Delete' + color.END + '---------------')
+        print(dec(color.RED + 'Delete' + color.END))
         cursor.execute("PRAGMA key={}".format(account_pass))
         cursor.execute("""select name, bday, cast (julianday(
             case
@@ -383,12 +388,11 @@ def main():
         if results.size:
             list_name = list()
             for item in results:
-                print('')
                 print(color.OKBLUE + 'Name: ' + color.END + item[0] + color.OKBLUE + ' date of birth: ' + color.END + item[1].replace('-', '.'))
-                print(color.OKBLUE + 'In ' + color.END + item[2] + color.OKBLUE + ' days it will be ' + color.END + item[3] + color.OKBLUE + ' years' + color.END)
+                print(color.OKBLUE + 'In ' + color.END + item[2] + color.OKBLUE + ' days it will be ' + color.END + item[3] + color.OKBLUE + ' years\n' + color.END)
                 list_name.append(item[0])
             while True:
-                uc = input(color.OKBLUE + '\nEnter name to delete: ' + color.END)
+                uc = input(color.OKBLUE + 'Enter name to delete: ' + color.END)
                 if uc == 'Q':
                     main()
                 # проверка name на сущ
@@ -399,7 +403,7 @@ def main():
                 # конец проверки name
             clearScr()
             print(botdrlogo)
-            print('---------------' + color.RED + 'Delete' + color.END + '---------------\n')
+            print(dec(color.RED + 'Delete' + color.END))
             user_podtv = input(color.OKBLUE + 'Delete ' + uc + color.OKBLUE + ' ? [Y/n]: ' + color.END)
             if user_podtv == 'n':
                 main()
@@ -423,7 +427,7 @@ def main():
             main()
     elif usercomand == '5':  # 5-edit
         print(botdrlogo)
-        print('---------------' + color.RED + 'Edit' + color.END + '---------------\n')
+        print(dec(color.RED + 'Edit' + color.END))
         cursor.execute('select count(name) from users')
         results = cursor.fetchone()
         if results[0] > 0:
@@ -442,7 +446,7 @@ def main():
                     break
             clearScr()
             print(botdrlogo)
-            print('---------------' + color.RED + 'Edit ' + color.END + uc_name + '---------------\n')
+            print(dec(color.RED + 'Edit ' + color.END + uc_name))
             sql = 'SELECT * FROM users WHERE name = ?'
             cursor.execute(sql, (uc_name,))
             results = cursor.fetchone()
@@ -456,7 +460,7 @@ def main():
                 if uc == '1':
                     clearScr()
                     print(botdrlogo)
-                    print('---------------' + color.RED + 'Edit name ' + color.END + uc_name + '---------------\n')
+                    print(dec(color.RED + 'Edit name ' + color.END + uc_name))
                     while True:
                         user_name = input(color.OKBLUE + 'Enter new name: ' + color.END)
                         if user_name == 'Q':
@@ -491,7 +495,7 @@ def main():
                 elif uc == '2':
                     clearScr()
                     print(botdrlogo)
-                    print('---------------' + color.RED + 'Edit date birth ' + color.END + uc_name + '---------------\n')
+                    print(dec(color.RED + 'Edit date birth ' + color.END + uc_name))
                     while True:
                         date_birthday = input(color.OKBLUE + 'When is your birthday? [YYYY.MM.DD]: ' + color.END)
                         if date_birthday == 'Q':
@@ -531,7 +535,7 @@ def main():
         main()
     elif usercomand == '6':  # 6-statistics
         print(botdrlogo)
-        print('---------------' + color.RED + 'Statistics' + color.END + '---------------\n')
+        print(dec(color.RED + 'Statistics' + color.END))
         cursor.execute("PRAGMA key={}".format(account_pass))
         cursor.execute('select count(name) from users')
         results2 = cursor.fetchone()
@@ -578,7 +582,7 @@ def main():
             main()
     elif usercomand == '7':  # 7-account actions
         print(botdrlogo)
-        print('---------------' + color.RED + 'Account actions' + color.END + '---------------\n')
+        print(dec(color.RED + 'Account actions' + color.END))
         while True:
             print(color.RED + '1' + color.END + ')--' + color.OKBLUE + 'Delete account' + color.END)
             print(color.RED + '2' + color.END + ')--' + color.OKBLUE + 'Change Password' + color.END)
@@ -594,7 +598,7 @@ def main():
             elif uc == '1':  # 1-delete account
                 clearScr()
                 print(botdrlogo)
-                print('---------------' + color.RED + 'Delete account' + color.END + '---------------\n')
+                print(dec(color.RED + 'Delete account' + color.END))
                 while True:
                     try:
                         account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
@@ -624,7 +628,7 @@ def main():
             elif uc == '2':  # Change Password
                 clearScr()
                 print(botdrlogo)
-                print('---------------' + color.RED + 'Change Password' + color.END + '---------------\n')
+                print(dec(color.RED + 'Change Password' + color.END))
                 while True:
                     try:
                         account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
@@ -669,7 +673,7 @@ def main():
             elif uc == '3':  # export and import csv
                 clearScr()
                 print(botdrlogo)
-                print('---------------' + color.RED + 'Export and import csv' + color.END + '---------------\n')
+                print(dec(color.RED + 'Export and import csv' + color.END))
                 while True:
                     try:
                         account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
@@ -684,7 +688,7 @@ def main():
                         break
                 clearScr()
                 print(botdrlogo)
-                print('---------------' + color.RED + 'Export and import csv' + color.END + '---------------\n')
+                print(dec(color.RED + 'Export and import csv' + color.END))
                 while True:
                     print(color.RED + '1' + color.END + ')--' + color.OKBLUE + 'Export' + color.END)
                     print(color.RED + '2' + color.END + ')--' + color.OKBLUE + 'Import\n' + color.END)
@@ -699,7 +703,7 @@ def main():
                             break
                         clearScr()
                         print(botdrlogo)
-                        print('---------------' + color.RED + 'Export csv' + color.END + '---------------\n')
+                        print(dec(color.RED + 'Export csv' + color.END))
                         while True:
                             uc = input(color.OKBLUE + 'Encrypt export file? [Y/n]: ' + color.END)
                             if uc == 'Q':
@@ -760,7 +764,7 @@ def main():
                     elif uc == '2': # import
                         clearScr()
                         print(botdrlogo)
-                        print('---------------' + color.RED + 'Import csv' + color.END + '---------------\n')
+                        print(dec(color.RED + 'Import csv' + color.END))
                         uc = input(color.OKBLUE + 'Is the file encrypted? [Y/n]: ' + color.END)
                         if uc == 'Q':
                             main
