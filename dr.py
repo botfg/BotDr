@@ -18,6 +18,7 @@ import csv
 import getpass
 import os
 import sys
+from typing import Tuple, List, Set, Union
 from datetime import date, datetime
 
 
@@ -27,20 +28,20 @@ from pysqlcipher3 import dbapi2 as sqlite
 
 
 class color:
-    HEADER = '\033[95m'
-    IMPORTANT = '\33[35m'
-    NOTICE = '\033[33m'
-    OKBLUE = '\033[94m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    RED = '\033[91m'
-    END = '\033[0m'
-    UNDERLINE = '\033[4m'
-    LOGGING = '\33[34m'
+    HEADER: str = '\033[95m'
+    IMPORTANT: str = '\33[35m'
+    NOTICE: str = '\033[33m'
+    OKBLUE: str = '\033[94m'
+    OKGREEN: str = '\033[92m'
+    WARNING: str = '\033[93m'
+    RED: str = '\033[91m'
+    END: str = '\033[0m'
+    UNDERLINE: str = '\033[4m'
+    LOGGING: str = '\33[34m'
 
-botdrPrompt = "BotDr ~# "
+botdrPrompt: str = ("BotDr ~# ")
 
-botdrlogo = (color.OKGREEN + '''
+botdrlogo: str = (color.OKGREEN + '''
     ____        __     ____      
    / __ )____  / /_   / __ \_____
   / __  / __ \/ __/  / / / / ___/
@@ -49,16 +50,16 @@ botdrlogo = (color.OKGREEN + '''
 ''' + color.END)
 
 
-def clearScr():
+def clearScr() -> None:
     os.system('clear')
 
 
-def dec(string):
-    length_string = (44 - len(string)) // 2     # 34
-    decor = str((length_string * '-') + string + (length_string * '-') + '\n')
+def dec(string: str) -> str:
+    length_string: int = (44 - len(string)) // 2     # 34
+    decor: str = str((length_string * '-') + string + (length_string * '-') + '\n')
     return decor
 
-def vhod():
+def vhod() -> None:
     global account_name, account_pass, conn, cursor
     clearScr()
     print(botdrlogo)
@@ -84,21 +85,21 @@ def vhod():
             elif len(account_name) < 3:
                 print(color.RED + 'login length must be more than 3 characters' + color.END)
                 continue
-            x1 = os.path.isfile(account_name + '.db')
+            x1: bool = os.path.isfile(account_name + '.db')
             if x1:
                 print(color.RED + 'an account with that name already exists' + color.END)
             elif not x1:
                 break
         # end check account_existence
         while True:
-            password1 = getpass.getpass(color.OKBLUE + 'enter password: ' + color.END)
+            password1: str = getpass.getpass(color.OKBLUE + 'enter password: ' + color.END)
             if password1 == 'Q':
                 vhod()
             elif password1 == account_name:
                 print(color.RED + 'login cannot be a password' + color.END)
             else:
                 break
-        password2 = getpass.getpass(color.OKBLUE + 'repeat password: ' + color.END)
+        password2: str = getpass.getpass(color.OKBLUE + 'repeat password: ' + color.END)
         if password2 == 'Q':
             vhod()
         while True:
@@ -107,20 +108,20 @@ def vhod():
                 break
             elif password1 != password2:
                 print(color.RED + 'different passwords' + color.END)
-                password1 = getpass.getpass(color.OKBLUE + 'enter password: ' + color.END)
-                password2 = getpass.getpass(color.OKBLUE + 'repeat password: ' + color.END)
+                password1: str = getpass.getpass(color.OKBLUE + 'enter password: ' + color.END)
+                password2: str = getpass.getpass(color.OKBLUE + 'repeat password: ' + color.END)
                 if password1 or password2 == 'Q':
                     vhod()
         while True:
-            u_podtver = input(color.OKBLUE + '[Y/n] add ' + color.END + account_name + ': ')
+            u_podtver: str = input(color.OKBLUE + '[Y/n] add ' + color.END + account_name + ': ')
             if u_podtver == 'n':
                 vhod()
                 break
             elif u_podtver == 'Y':
                 # make users db
-                name_db = account_name + '.db'
-                cur_dir = os.getcwd()
-                path_db = os.path.join(cur_dir, name_db)
+                name_db: str = account_name + '.db'
+                cur_dir: str = os.getcwd()
+                path_db: str = os.path.join(cur_dir, name_db)
                 conn = sqlite.connect(path_db)
                 cursor = conn.cursor()
                 cursor.execute("PRAGMA key={}".format(account_pass))
@@ -140,7 +141,7 @@ def vhod():
             account_name = input(color.OKBLUE + 'login: ' + color.END)
             if account_name == 'Q':
                 vhod()
-            x = os.path.isfile(account_name + '.db')
+            x: bool = os.path.isfile(account_name + '.db')
             if x:
                 break
             elif not x:
@@ -172,7 +173,7 @@ def vhod():
         vhod()
 
 
-def main():
+def main() -> None:
     global account_name, account_pass, cursor, conn
     clearScr()
     print(botdrlogo)
@@ -191,10 +192,10 @@ def main():
                 else strftime('%Y-', 'now') - strftime('%Y-', bday) + '1 year'
             end
         ) as int) as year_after_bday from users order by tillbday""")
-    results = numpy.array(cursor.fetchall(), dtype=str)
-    birth_in_mounth = 0
-    now = datetime.now()
-    mounth = calendar.monthrange(now.year, now.month)[1]
+    results: numpy.ndarray  = numpy.array(cursor.fetchall(), dtype=str)
+    birth_in_mounth: int = 0
+    now: datetime = datetime.now()
+    mounth: int = calendar.monthrange(now.year, now.month)[1]
     for i in results:
         if (int(mounth) - int(i[2])) > int(i[2]):
             birth_in_mounth += 1
@@ -208,7 +209,7 @@ def main():
     print(color.RED + '6' + color.END + ')--' + color.OKBLUE + 'STATISTICS' + color.END)
     print(color.RED + '7' + color.END + ')--' + color.OKBLUE + 'ACCOUNT ACTIONS' + color.END)
     print(color.RED + 'Q' + color.END + ')--' + color.OKBLUE + 'EXIT\n' + color.END)
-    usercomand = input(botdrPrompt)
+    usercomand: str = input(botdrPrompt)
     clearScr()
     if usercomand == "dr":
         print(botdrlogo)
@@ -226,10 +227,10 @@ def main():
                 else strftime('%Y-', 'now') - strftime('%Y-', bday) + '1 year'
             end
         ) as int) as year_after_bday from users order by tillbday""")
-        results = numpy.array(cursor.fetchall(), dtype=str)
-        birth_in_mounth = 0
-        now = datetime.now()
-        mounth = calendar.monthrange(now.year, now.month)[1]
+        results: numpy.ndarray = numpy.array(cursor.fetchall(), dtype=str)
+        birth_in_mounth: int = 0
+        now: datetime = datetime.now()
+        mounth: int = calendar.monthrange(now.year, now.month)[1]
         for i in results:
             if (int(mounth) - int(i[2])) > int(i[2]):
                 birth_in_mounth += 1
@@ -239,7 +240,7 @@ def main():
                 print(color.OKBLUE + 'In ' + color.END + item[2] + color.OKBLUE + ' days it will be ' + color.END + item[3] + color.OKBLUE + ' years\n' + color.END)
             while True:
                 print(color.RED + 'Q)--GO BACK\n' + color.END)
-                uc = input(botdrPrompt)
+                uc: str = input(botdrPrompt)
                 if uc == 'Q':
                     main()
                     break
@@ -247,15 +248,15 @@ def main():
         print(botdrlogo)
         print(dec(color.RED + 'Add' + color.END))
         while True:
-            user_name = input(color.OKBLUE + 'Enter name: ' + color.END)
+            user_name: str = input(color.OKBLUE + 'Enter name: ' + color.END)
             if user_name == 'Q':
                 main()
             # проверка на повторение
             cursor.execute("PRAGMA key={}".format(account_pass))
-            sql = ('SELECT COUNT(name) FROM users WHERE name = ?')
+            sql: str = ('SELECT COUNT(name) FROM users WHERE name = ?')
             cursor.execute(sql, (user_name,))
-            results = cursor.fetchone()
-            lol = results[0]
+            results: Tuple[int] = cursor.fetchone()
+            lol: int = results[0]
             if lol == 0:
                 break
             elif lol > 0:
@@ -263,17 +264,17 @@ def main():
         clearScr()
         print(botdrlogo)
         print(dec(color.RED + 'Add:' + color.END + user_name))
-        date_birthday = input(color.OKBLUE + 'When is your birthday?' + color.END + '[YYYY.MM.DD]: ')
+        date_birthday: str = input(color.OKBLUE + 'When is your birthday?' + color.END + '[YYYY.MM.DD]: ')
         if date_birthday == 'Q':
             main()
         while True:
             try:
-                date_birthday = datetime.strptime(date_birthday, '%Y.%m.%d').date()
+                date_birthday: datetime.date = datetime.strptime(date_birthday, '%Y.%m.%d').date()
                 if date_birthday == 'Q':
                     main()
             except ValueError:
                 print('Incorrect date')
-                date_birthday = input(color.OKBLUE + 'When is your birthday?' + color.END + '[YYYY.MM.DD]: ')
+                date_birthday: str = input(color.OKBLUE + 'When is your birthday?' + color.END + '[YYYY.MM.DD]: ')
                 if date_birthday == 'Q':
                     main()
             else:
@@ -296,7 +297,7 @@ def main():
         print(botdrlogo)
         cursor.execute("PRAGMA key={}".format(account_pass))
         cursor.execute('SELECT name FROM users')
-        results = numpy.array(cursor.fetchall(), dtype=str)
+        results: numpy.ndarray = numpy.array(cursor.fetchall(), dtype=str)
         if not results.size:
             main()
         cursor.execute("""select name, bday, cast (julianday(
@@ -312,14 +313,14 @@ def main():
                 else strftime('%Y-', 'now') - strftime('%Y-', bday) + '1 year'
             end
         ) as int) as year_after_bday from users order by tillbday""")
-        results = numpy.array(cursor.fetchall(), dtype=str)
+        results: numpy.ndarray = numpy.array(cursor.fetchall(), dtype=str)
         print(dec(color.RED + 'View' + color.END))
         for item in results:
             print(color.OKBLUE + 'Name: ' + color.END + item[0] + color.OKBLUE + ' date of birth: ' + color.END + item[1].replace('-', '.'))
             print(color.OKBLUE + 'In ' + color.END + item[2] + color.OKBLUE + ' days it will be ' + color.END + item[3] + color.OKBLUE + ' years\n' + color.END)
         while True:
             print(color.RED + 'Q)--GO BACK\n' + color.END)
-            uc = input(botdrPrompt)
+            uc: str = input(botdrPrompt)
             if uc == 'Q':
                 main()
                 break
@@ -340,13 +341,13 @@ def main():
                 else strftime('%Y-', 'now') - strftime('%Y-', bday) + '1 year'
             end
         ) as int) as year_after_bday from users order by tillbday""")
-        results = numpy.array(cursor.fetchall(), dtype=str)
+        results: numpy.ndarray = numpy.array(cursor.fetchall(), dtype=str)
         if not results.size:
             main()
         elif results.size > 0:
             cursor.close
             while True:
-                uc = input(color.OKBLUE + 'Delete all person? [Y/n]: ' + color.END)
+                uc: str = input(color.OKBLUE + 'Delete all person? [Y/n]: ' + color.END)
                 if uc == 'Y':
                     break
                 elif uc == 'n':
@@ -384,15 +385,15 @@ def main():
                 else strftime('%Y-', 'now') - strftime('%Y-', bday) + '1 year'
             end
         ) as int) as year_after_bday from users order by tillbday""")
-        results = numpy.array(cursor.fetchall(), dtype=str)
+        results: numpy.ndarray = numpy.array(cursor.fetchall(), dtype=str)
         if results.size:
-            list_name = list()
+            list_name: List[str] = list()
             for item in results:
                 print(color.OKBLUE + 'Name: ' + color.END + item[0] + color.OKBLUE + ' date of birth: ' + color.END + item[1].replace('-', '.'))
                 print(color.OKBLUE + 'In ' + color.END + item[2] + color.OKBLUE + ' days it will be ' + color.END + item[3] + color.OKBLUE + ' years\n' + color.END)
                 list_name.append(item[0])
             while True:
-                uc = input(color.OKBLUE + 'Enter name to delete: ' + color.END)
+                uc: str = input(color.OKBLUE + 'Enter name to delete: ' + color.END)
                 if uc == 'Q':
                     main()
                 # проверка name на сущ
@@ -404,7 +405,7 @@ def main():
             clearScr()
             print(botdrlogo)
             print(dec(color.RED + 'Delete' + color.END))
-            user_podtv = input(color.OKBLUE + 'Delete ' + uc + color.OKBLUE + ' ? [Y/n]: ' + color.END)
+            user_podtv: str = input(color.OKBLUE + 'Delete ' + uc + color.OKBLUE + ' ? [Y/n]: ' + color.END)
             if user_podtv == 'n':
                 main()
             elif user_podtv == 'Y':
@@ -420,26 +421,25 @@ def main():
                         print(color.RED + 'Wrong password' + color.END)
                     else:
                         break
-            sql = """DELETE FROM users WHERE name = ?"""
-            cursor.execute(
-                sql, (uc,))
+            sql: str = ("""DELETE FROM users WHERE name = ?""")
+            cursor.execute(sql, (uc,))
             conn.commit()
             main()
     elif usercomand == '5':  # 5-edit
         print(botdrlogo)
         print(dec(color.RED + 'Edit' + color.END))
         cursor.execute('select count(name) from users')
-        results = cursor.fetchone()
+        results: Tuple[int] = cursor.fetchone()
         if results[0] > 0:
             while True:
-                uc_name = input(color.OKBLUE + 'Enter name: ' + color.END)
+                uc_name: str = input(color.OKBLUE + 'Enter name: ' + color.END)
                 if uc_name == 'Q':
                     main()
                 # проверка на повторение
-                sql = 'SELECT COUNT(name) FROM users WHERE name = ?'
+                sql: str = ('SELECT COUNT(name) FROM users WHERE name = ?')
                 cursor.execute(sql, (uc_name,))
-                results = cursor.fetchone()
-                lol = results[0]
+                results: Tuple[int] = cursor.fetchone()
+                lol: int = results[0]
                 if lol == 0:
                     print(color.RED + 'Name not found' + color.END)
                 elif lol == 1:
@@ -447,14 +447,14 @@ def main():
             clearScr()
             print(botdrlogo)
             print(dec(color.RED + 'Edit ' + color.END + uc_name))
-            sql = 'SELECT * FROM users WHERE name = ?'
+            sql: str = ('SELECT * FROM users WHERE name = ?')
             cursor.execute(sql, (uc_name,))
-            results = cursor.fetchone()
+            results: Tuple[str, int] = cursor.fetchone()
             print(color.OKBLUE + 'Name: ' + color.END + str(results[0]) + color.OKBLUE + ' birth date: ' + color.END + str(results[1]))
             while True:
                 print(color.RED + '\n1' + color.END + ')--' + color.OKBLUE + 'Edit name' + color.END)
                 print(color.RED + '2' + color.END + ')--' + color.OKBLUE + 'Edit date' + color.END)
-                uc = input(botdrPrompt)
+                uc: str = input(botdrPrompt)
                 if uc == 'Q':
                     main()
                 if uc == '1':
@@ -462,15 +462,15 @@ def main():
                     print(botdrlogo)
                     print(dec(color.RED + 'Edit name ' + color.END + uc_name))
                     while True:
-                        user_name = input(color.OKBLUE + 'Enter new name: ' + color.END)
+                        user_name: str = input(color.OKBLUE + 'Enter new name: ' + color.END)
                         if user_name == 'Q':
                             main()
                         # проверка на повторение
                         cursor.execute("PRAGMA key={}".format(account_pass))
-                        sql = 'SELECT COUNT(name) FROM users WHERE name = ?'
+                        sql: str = ('SELECT COUNT(name) FROM users WHERE name = ?')
                         cursor.execute(sql, (user_name,))
-                        results = cursor.fetchone()
-                        lol = results[0]
+                        results: Tuple[int] = cursor.fetchone()
+                        lol: int = results[0]
                         if lol == 0:
                             break
                         elif lol > 0:
@@ -481,14 +481,13 @@ def main():
                             main()
                         try:
                             conn.close
-                            cursor.execute(
-                                "PRAGMA key={}".format(account_pass))
+                            cursor.execute("PRAGMA key={}".format(account_pass))
                             cursor.execute('SELECT COUNT(name) FROM users')
                         except:
                             print(color.RED + 'Wrong password' + color.END)
                         else:
                             break
-                    sql = """UPDATE users SET name = ? WHERE name = ?"""
+                    sql: str = ("""UPDATE users SET name = ? WHERE name = ?""")
                     cursor.execute(sql, (user_name, uc_name))
                     conn.commit()
                     break
@@ -497,12 +496,11 @@ def main():
                     print(botdrlogo)
                     print(dec(color.RED + 'Edit date birth ' + color.END + uc_name))
                     while True:
-                        date_birthday = input(color.OKBLUE + 'When is your birthday? [YYYY.MM.DD]: ' + color.END)
+                        date_birthday: str = input(color.OKBLUE + 'When is your birthday? [YYYY.MM.DD]: ' + color.END)
                         if date_birthday == 'Q':
                             main()
                         try:
-                            date_birthday = datetime.strptime(
-                                date_birthday, '%Y.%m.%d').date()
+                            date_birthday: datetime = datetime.strptime(date_birthday, '%Y.%m.%d').date()
                             if date_birthday == 'Q':
                                 main()
                         except ValueError:
@@ -515,14 +513,13 @@ def main():
                             main()
                         try:
                             conn.close
-                            cursor.execute(
-                                "PRAGMA key={}".format(account_pass))
+                            cursor.execute("PRAGMA key={}".format(account_pass))
                             cursor.execute('SELECT COUNT(name) FROM users')
                         except:
                             print(color.RED + 'wrong password' + color.END)
                         else:
                             break
-                    sql = """UPDATE users SET bday = ? WHERE name = ?"""
+                    sql: str = ("""UPDATE users SET bday = ? WHERE name = ?""")
                     cursor.execute(
                         sql, (date_birthday, uc_name))
                     conn.commit()
@@ -538,10 +535,10 @@ def main():
         print(dec(color.RED + 'Statistics' + color.END))
         cursor.execute("PRAGMA key={}".format(account_pass))
         cursor.execute('select count(name) from users')
-        results2 = cursor.fetchone()
+        results2: Tuple[int] = cursor.fetchone()
         if results2[0] > 0:
-            today = date.today()
-            year = today.year
+            today: datetime.date = date.today()
+            year: datetime.date = today.year
             if year % 4 == 0:
                 if year % 100 == 0 and year % 400 != 0:
                     year = 365
@@ -562,19 +559,19 @@ def main():
                     else strftime('%Y-', 'now') - strftime('%Y-', bday) + '1 year'
                 end
             ) as int) as year_after_bday from users order by tillbday""")
-            results = numpy.array(cursor.fetchall(), dtype=str)
-            dr_in_this_year = 0
+            results: numpy.ndarray = numpy.array(cursor.fetchall(), dtype=str)
+            dr_in_this_year: int = 0
             for i in results:
                 if (year - int(i[0])) < int(i[0]):
                     dr_in_this_year += 1
             print(color.OKBLUE + 'total people: ' + color.END + str(results2[0]))
-            mas_year = list(int(i[1]) - 1 for i in results)
-            avg = int(sum(mas_year)//len(mas_year))
+            mas_year: List[int] = list(int(i[1]) - 1 for i in results)
+            avg: int = int(sum(mas_year)//len(mas_year))
             print(color.OKBLUE + 'average age: ' + color.END + str(avg))
             print(color.OKBLUE + 'birthdays this year: ' + color.END + str(dr_in_this_year))
             while True:
                 print(color.RED + '\nQ)--GO BACK\n' + color.END)
-                uc = input(botdrPrompt)
+                uc: str = input(botdrPrompt)
                 if uc == 'Q':
                     main()
                     break
@@ -588,7 +585,7 @@ def main():
             print(color.RED + '2' + color.END + ')--' + color.OKBLUE + 'Change Password' + color.END)
             print(color.RED + '3' + color.END + ')--' + color.OKBLUE + 'Export/import csv' + color.END)
             print(color.RED + '4' + color.END + ')--' + color.OKBLUE + 'Sign out\n' + color.END)
-            uc = input(botdrPrompt)
+            uc: str = input(botdrPrompt)
             if uc == '4':  # 4-sign out
                 conn.close
                 vhod()
@@ -612,7 +609,7 @@ def main():
                     else:
                         break
                 while True:
-                    uc = input(color.OKBLUE + 'Delete this account? [Y/n]: ' + color.END)
+                    uc: str = input(color.OKBLUE + 'Delete this account? [Y/n]: ' + color.END)
                     if uc == 'n':
                         break
                     elif uc == 'Y':
@@ -642,32 +639,32 @@ def main():
                     else:
                         break
                 while True:
-                    new_account_pass_1 = getpass.getpass(color.OKBLUE + 'Enter new password: ' + color.END)
+                    new_account_pass_1: str = getpass.getpass(color.OKBLUE + 'Enter new password: ' + color.END)
                     if new_account_pass_1 == 'Q':
                         main()
                     elif new_account_pass_1 == account_name:
                         print(color.RED + 'Login cannot be a password' + color.END)
                     else:
                         break
-                new_account_pass_2 = getpass.getpass(color.OKBLUE + 'Repeat new pass: ' + color.END)
+                new_account_pass_2: str = getpass.getpass(color.OKBLUE + 'Repeat new pass: ' + color.END)
                 if new_account_pass_2 == 'Q':
                     main()
                 while True:
                     if new_account_pass_1 and new_account_pass_2 == account_pass:
                         print(color.RED + 'Valid password entered' + color.END)
-                        new_account_pass_1 = getpass.getpass(color.OKBLUE + 'Enter new password: ' + color.END)
+                        new_account_pass_1: str = getpass.getpass(color.OKBLUE + 'Enter new password: ' + color.END)
                         if new_account_pass_1 == 'Q':
                             main()
-                        new_account_pass_2 = getpass.getpass(color.OKBLUE + 'Repeat new password: ' + color.END)
+                        new_account_pass_2: str = getpass.getpass(color.OKBLUE + 'Repeat new password: ' + color.END)
                     elif new_account_pass_1 == new_account_pass_2:
                         account_pass = new_account_pass_1
                         break
                     else:
                         print(color.RED + 'Different passwords' + color.END)
-                        new_account_pass_1 = getpass.getpass(color.OKBLUE + 'Enter new password: ' + color.END)
+                        new_account_pass_1: str = getpass.getpass(color.OKBLUE + 'Enter new password: ' + color.END)
                         if new_account_pass_1 == 'Q':
                             main()
-                        new_account_pass_2 = getpass.getpass(color.OKBLUE + 'Repeat new password: ' + color.END)
+                        new_account_pass_2: str = getpass.getpass(color.OKBLUE + 'Repeat new password: ' + color.END)
                 cursor.execute('PRAGMA rekey={}'.format(account_pass))
                 break
             elif uc == '3':  # export and import csv
@@ -692,12 +689,12 @@ def main():
                 while True:
                     print(color.RED + '1' + color.END + ')--' + color.OKBLUE + 'Export' + color.END)
                     print(color.RED + '2' + color.END + ')--' + color.OKBLUE + 'Import\n' + color.END)
-                    uc = input(botdrPrompt)
+                    uc: str = input(botdrPrompt)
                     if uc == 'Q':
                         main()
                     elif uc == '1': # export
                         cursor.execute("select name, bday from users")
-                        results = numpy.array(cursor.fetchall(), dtype=str)
+                        results: numpy.ndarray = numpy.array(cursor.fetchall(), dtype=str)
                         if results.size == 0:
                             main()
                             break
@@ -705,12 +702,12 @@ def main():
                         print(botdrlogo)
                         print(dec(color.RED + 'Export csv' + color.END))
                         while True:
-                            uc = input(color.OKBLUE + 'Encrypt export file? [Y/n]: ' + color.END)
+                            uc: str = input(color.OKBLUE + 'Encrypt export file? [Y/n]: ' + color.END)
                             if uc == 'Q':
                                 main()
                             elif uc == 'n':
                                 while True:
-                                    name_export = input(color.OKBLUE + 'Enter name export file: ' + color.END)
+                                    name_export: str = input(color.OKBLUE + 'Enter name export file: ' + color.END)
                                     if name_export == 'Q':
                                         main()                 
                                     if len(name_export) == 0:
@@ -725,10 +722,10 @@ def main():
                                 main()
                             elif uc == 'Y':
                                 while True:
-                                    password_1 = getpass.getpass(color.OKBLUE + 'Enter password for export file: ' + color.END)
+                                    password_1: str = getpass.getpass(color.OKBLUE + 'Enter password for export file: ' + color.END)
                                     if password_1 == 'Q':
                                         main()
-                                    password_2 = getpass.getpass(color.OKBLUE + 'Repeat password for export file: ' + color.END)
+                                    password_2: str = getpass.getpass(color.OKBLUE + 'Repeat password for export file: ' + color.END)
                                     if password_2 == 'Q':
                                         main()
                                     if str(password_1) == str(password_2):
@@ -737,7 +734,7 @@ def main():
                                     else:
                                         print(color.RED + 'Different password' + color.END)
                                 while True:
-                                    name_export = input(color.OKBLUE + 'Enter name export file: ' + color.END)
+                                    name_export: str = input(color.OKBLUE + 'Enter name export file: ' + color.END)
                                     if name_export == 'Q':
                                         main()                 
                                     if len(name_export) == 0:
@@ -745,17 +742,17 @@ def main():
                                     elif len(name_export) > 0:
                                         break
                                 cursor.execute("select name, bday from users")
-                                results = numpy.array(cursor.fetchall(), dtype=str)
+                                results: numpy.ndarray = numpy.array(cursor.fetchall(), dtype=str)
                                 if results.size == 0:
                                     print(color.RED + 'No person' + color.END)
                                     main()
-                                file = (name_export + '.csv')
+                                file: str = (name_export + '.csv')
                                 with open(file, "w", newline='') as csv_file:
                                     writer = csv.writer(csv_file, delimiter=',')
                                     for line in results:
                                         writer.writerow(line)
                                 csv_file.close()
-                                buffer_size1 = 512 * 2048
+                                buffer_size1: int = 512 * 2048
                                 pyAesCrypt.encryptFile(file, str(file + '.aes'), password, buffer_size1)
                                 os.remove(file)
                                 main()
@@ -765,15 +762,15 @@ def main():
                         clearScr()
                         print(botdrlogo)
                         print(dec(color.RED + 'Import csv' + color.END))
-                        uc = input(color.OKBLUE + 'Is the file encrypted? [Y/n]: ' + color.END)
+                        uc: str = input(color.OKBLUE + 'Is the file encrypted? [Y/n]: ' + color.END)
                         if uc == 'Q':
                             main
                         elif uc == 'n':
                             while True: # проверка файла на существование
-                                file = input(color.OKBLUE + 'Enter csv file: ' + color.END)
+                                file: str = input(color.OKBLUE + 'Enter csv file: ' + color.END)
                                 if file == 'Q':
                                     main()
-                                x1 = os.path.isfile(file)
+                                x1: bool = os.path.isfile(file)
                                 if x1:
                                     if file.endswith('.csv'):
                                         break
@@ -782,17 +779,17 @@ def main():
                                 if not x1:
                                     print(color.RED + 'File missing' + color.END)
                             cursor.execute("select name, bday from users")
-                            results = numpy.array(cursor.fetchall(), dtype=str)
+                            results: numpy.ndarray = numpy.array(cursor.fetchall(), dtype=str)
                             with open(file, "r") as f_obj:
                                 reader = csv.reader(f_obj)
-                                incorrect_import_csv = list()
+                                incorrect_import_csv: List[str] = list()
                                 for row in reader:
                                     if len(row) == 2:
                                         if row[0] in results:
                                             incorrect_import_csv.append(row)
                                             continue
                                         try:
-                                            date_birthday = datetime.strptime(row[1], '%Y-%m-%d').date()
+                                            date_birthday: datetime = datetime.strptime(row[1], '%Y-%m-%d').date()
                                         except ValueError:
                                             incorrect_import_csv.append(row)
                                         else:
@@ -809,10 +806,10 @@ def main():
                             main()
                         elif uc == 'Y':
                             while True: # проверка файла на существование
-                                file = input(color.OKBLUE + 'Enter csv file: ' + color.END)
+                                file: str = input(color.OKBLUE + 'Enter csv file: ' + color.END)
                                 if file == 'Q':
                                     main()
-                                x1 = os.path.isfile(file)
+                                x1: bool = os.path.isfile(file)
                                 if x1:
                                     if file.endswith('.csv.aes'):
                                         break
@@ -820,11 +817,11 @@ def main():
                                         print(color.RED + 'This is not a csv file' + color.END)
                                 if not x1:
                                     print(color.RED + 'File missing' + color.END)
-                            buffer_size1 = 512 * 2048
-                            file2 = file[0:-4]
+                            buffer_size1: int = 512 * 2048
+                            file2: str = file[0:-4]
                             while True:
                                 try:
-                                    password = getpass.getpass(color.OKBLUE + 'Enter password for export file: ' + color.END)
+                                    password: str = getpass.getpass(color.OKBLUE + 'Enter password for export file: ' + color.END)
                                     pyAesCrypt.decryptFile(file, file2, password, buffer_size1)
                                 except:
                                     print(color.RED + 'Wrong password' + color.END)
@@ -832,17 +829,17 @@ def main():
                                     break
                             os.remove(file)
                             cursor.execute("select name, bday from users")
-                            results = numpy.array(cursor.fetchall(), dtype=str)
+                            results: numpy.ndarray = numpy.array(cursor.fetchall(), dtype=str)
                             with open(file2, "r") as f_obj:
                                 reader = csv.reader(f_obj)
-                                incorrect_import_csv = list()
+                                incorrect_import_csv: List[str] = list()
                                 for row in reader:
                                     if len(row) == 2:
                                         if row[0] in results:
                                             incorrect_import_csv.append(row)
                                             continue
                                         try:
-                                            date_birthday = datetime.strptime(row[1], '%Y-%m-%d').date()
+                                            date_birthday: datetime = datetime.strptime(row[1], '%Y-%m-%d').date()
                                         except ValueError:
                                             incorrect_import_csv.append(row)
                                         else:
