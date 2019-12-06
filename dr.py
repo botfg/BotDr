@@ -64,7 +64,6 @@ def vhod() -> None:
     clearScr()
     print(botdrlogo)
     print('enter Q to go to the main menu\n')
-    #print('---------------' + color.RED + 'Login' + color.END + '--------------\n')
     print(dec(color.RED + 'Login' + color.END))
     print(color.RED +'1' + color.END + ')--' + color.OKBLUE + 'sign up' + color.END)
     print(color.RED +'2' + color.END + ')--' + color.OKBLUE + 'sign in' + color.END)
@@ -208,6 +207,7 @@ def main() -> None:
     print(color.RED + '5' + color.END + ')--' + color.OKBLUE + 'EDIT' + color.END)
     print(color.RED + '6' + color.END + ')--' + color.OKBLUE + 'STATISTICS' + color.END)
     print(color.RED + '7' + color.END + ')--' + color.OKBLUE + 'ACCOUNT ACTIONS' + color.END)
+    print(color.RED + '8' + color.END + ')--' + color.OKBLUE + 'SEARCH' + color.END)
     print(color.RED + 'Q' + color.END + ')--' + color.OKBLUE + 'EXIT\n' + color.END)
     usercomand: str = input(botdrPrompt)
     clearScr()
@@ -435,14 +435,12 @@ def main() -> None:
                 uc_name: str = input(color.OKBLUE + 'Enter name: ' + color.END)
                 if uc_name == 'Q':
                     main()
-                # проверка на повторение
                 sql: str = ('SELECT COUNT(name) FROM users WHERE name = ?')
                 cursor.execute(sql, (uc_name,))
                 results: Tuple[int] = cursor.fetchone()
-                lol: int = results[0]
-                if lol == 0:
+                if results[0] == 0:
                     print(color.RED + 'Name not found' + color.END)
-                elif lol == 1:
+                elif results[0] == 1:
                     break
             clearScr()
             print(botdrlogo)
@@ -797,12 +795,13 @@ def main() -> None:
                                     else:
                                         incorrect_import_csv.append(row)
                             conn.commit()
-                            with open(account_name + 'incorrect_import.csv', "w", newline='') as csv_file:
-                                writer = csv.writer(csv_file, delimiter=',')
-                                for line in incorrect_import_csv:
-                                    writer.writerow(line)
+                            if incorrect_import_csv:
+                                with open(account_name + 'incorrect_import.csv', "w", newline='') as csv_file:
+                                    writer = csv.writer(csv_file, delimiter=',')
+                                    for line in incorrect_import_csv:
+                                        writer.writerow(line)
+                                csv_file.close()
                             f_obj.close()
-                            csv_file.close()
                             main()
                         elif uc == 'Y':
                             while True: # проверка файла на существование
@@ -847,12 +846,13 @@ def main() -> None:
                                     else:
                                         incorrect_import_csv.append(row)
                             conn.commit()
-                            with open(account_name + 'incorrect_import.csv', "w", newline='') as csv_file:
-                                writer = csv.writer(csv_file, delimiter=',')
-                                for line in incorrect_import_csv:
-                                    writer.writerow(line)
+                            if incorrect_import_csv:
+                                with open(account_name + 'incorrect_import.csv', "w", newline='') as csv_file:
+                                    writer = csv.writer(csv_file, delimiter=',')
+                                    for line in incorrect_import_csv:
+                                        writer.writerow(line)
+                                csv_file.close()
                             f_obj.close()
-                            csv_file.close()
                             main()
                         else:
                             print(color.RED + 'Wrong command' + color.END)
@@ -861,6 +861,58 @@ def main() -> None:
             else:
                 print(color.RED + 'Wrong command' + color.END)
         main()
+    elif usercomand == '8':
+        print(botdrlogo)
+        print(dec(color.RED + 'Search' + color.END))
+        cursor.execute('select count(name) from users')
+        results: Tuple[int] = cursor.fetchone()
+        uc_name: str = ''
+        if results[0] > 0:
+            while True:
+                uc_name: str = input(color.OKBLUE + 'Enter name: ' + color.END)
+                if uc_name == 'Q':
+                    main()
+                sql: str = ('SELECT COUNT(name) FROM users WHERE name = ?')
+                cursor.execute(sql, (uc_name,))
+                results: Tuple[int] = cursor.fetchone()
+                if results[0] == 0:
+                    print(color.RED + 'Name not found' + color.END)
+                    clearScr()
+                    print(botdrlogo)
+                    print(dec(color.RED + 'Search' + color.END))
+                elif results[0] == 1:
+                    break
+            sql: str = ("""select name, bday, cast (julianday(
+                case
+                    when strftime('%m-%d', bday) < strftime('%m-%d', 'now')
+                    then strftime('%Y-', 'now', '+1 year')
+                    else strftime('%Y-', 'now')
+                end || strftime('%m-%d', bday)
+            )-julianday('now') as int) as tillbday, cast (julianday(
+                case
+                    when strftime('%m-%d', bday) > strftime('%m-%d', 'now')
+                    then strftime('%Y-', 'now') - strftime('%Y-', bday)
+                    else strftime('%Y-', 'now') - strftime('%Y-', bday) + '1 year'
+                end
+            ) as int) as year_after_bday from users where name = ? order by tillbday""")
+            cursor.execute(sql, (uc_name,))
+            item: numpy.ndarray = numpy.array(cursor.fetchone(), dtype=str)
+            clearScr()
+            print(botdrlogo)
+            print(dec(color.RED + 'Search' + color.END))
+            print(color.OKBLUE + 'Name: ' + color.END + item[0] + color.OKBLUE + ' date of birth: ' + color.END + item[1].replace('-', '.'))
+            print(color.OKBLUE + 'In ' + color.END + item[2] + color.OKBLUE + ' days it will be ' + color.END + item[3] + color.OKBLUE + ' years\n' + color.END)
+            while True:
+                print(color.RED + 'Q)--GO BACK\n' + color.END)
+                uc_name: str = input(botdrPrompt)
+                if uc_name == 'Q':
+                    main()
+                    break
+                clearScr()
+                print(botdrlogo)
+                print(dec(color.RED + 'Search' + color.END))
+                print(color.OKBLUE + 'Name: ' + color.END + item[0] + color.OKBLUE + ' date of birth: ' + color.END + item[1].replace('-', '.'))
+                print(color.OKBLUE + 'In ' + color.END + item[2] + color.OKBLUE + ' days it will be ' + color.END + item[3] + color.OKBLUE + ' years\n' + color.END)
     elif usercomand == 'Q':  # Q-exit
         cursor.close()
         clearScr()
