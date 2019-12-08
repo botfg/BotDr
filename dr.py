@@ -178,25 +178,19 @@ def main() -> None:
     print(botdrlogo)
     print(dec(color.RED + 'options' + color.END))
     # soon dr
-    cursor.execute("""select name, bday, cast (julianday(
+    cursor.execute("""select cast (julianday(
             case
                 when strftime('%m-%d', bday) < strftime('%m-%d', 'now')
                 then strftime('%Y-', 'now', '+1 year')
                 else strftime('%Y-', 'now')
             end || strftime('%m-%d', bday)
-        )-julianday('now') as int) as tillbday, cast (julianday(
-            case
-                when strftime('%m-%d', bday) > strftime('%m-%d', 'now')
-                then strftime('%Y-', 'now') - strftime('%Y-', bday)
-                else strftime('%Y-', 'now') - strftime('%Y-', bday) + '1 year'
-            end
-        ) as int) as year_after_bday from users order by tillbday""")
-    results: numpy.ndarray  = numpy.array(cursor.fetchall(), dtype=str)
+        )-julianday('now') as int) as tillbday from users""")
+    results: numpy.ndarray  = numpy.array(cursor.fetchall(), dtype=int)
     birth_in_mounth: int = 0
     now: datetime = datetime.now()
     mounth: int = calendar.monthrange(now.year, now.month)[1]
     for i in results:
-        if (int(mounth) - int(i[2])) > int(i[2]):
+        if i[0] >= mounth:
             birth_in_mounth += 1
     print(color.RED + 'dr' + color.END + ')--' + color.OKBLUE +  'YIEW This month birthday: ' + color.END + str(birth_in_mounth))
     # end soon dr
@@ -228,22 +222,16 @@ def main() -> None:
             end
         ) as int) as year_after_bday from users order by tillbday""")
         results: numpy.ndarray = numpy.array(cursor.fetchall(), dtype=str)
-        birth_in_mounth: int = 0
-        now: datetime = datetime.now()
-        mounth: int = calendar.monthrange(now.year, now.month)[1]
-        for i in results:
-            if (int(mounth) - int(i[2])) > int(i[2]):
-                birth_in_mounth += 1
         for item in results:
-            if int(item[2]) <= int(mounth):      
+            if int(item[2]) <= mounth:      
                 print(color.OKBLUE + 'Name: ' + color.END + item[0] + color.OKBLUE + ' date of birth: ' + color.END + item[1].replace('-', '.'))
                 print(color.OKBLUE + 'In ' + color.END + item[2] + color.OKBLUE + ' days it will be ' + color.END + item[3] + color.OKBLUE + ' years\n' + color.END)
-            while True:
-                print(color.RED + 'Q)--GO BACK\n' + color.END)
-                uc: str = input(botdrPrompt)
-                if uc == 'Q':
-                    main()
-                    break
+        while True:
+            print(color.RED + 'Q)--GO BACK\n' + color.END)
+            uc: str = input(botdrPrompt)
+            if uc == 'Q':
+                main()
+                break
     elif usercomand == "1":  # 1-Add
         print(botdrlogo)
         print(dec(color.RED + 'Add' + color.END))
