@@ -359,68 +359,107 @@ def main() -> None:
     elif usercomand == '3':  # 3-delete person
         print(botdrlogo)
         print(dec(color.RED + 'Delete' + color.END))
-        cursor.execute("PRAGMA key={}".format(account_pass))
-        cursor.execute("""select name, bday, cast (julianday(
-            case
-                when strftime('%m-%d', bday) < strftime('%m-%d', 'now')
-                then strftime('%Y-', 'now', '+1 year')
-                else strftime('%Y-', 'now')
-            end || strftime('%m-%d', bday)
-        )-julianday('now') as int) as tillbday, cast (julianday(
-            case
-                when strftime('%m-%d', bday) > strftime('%m-%d', 'now')
-                then strftime('%Y-', 'now') - strftime('%Y-', bday)
-                else strftime('%Y-', 'now') - strftime('%Y-', bday) + '1 year'
-            end
-        ) as int) as year_after_bday from users order by tillbday""")
-        results: numpy.ndarray = numpy.array(cursor.fetchall(), dtype=str)
-        if results.size:
-            list_name: List[str] = list()
-            for item in results:
-                print(color.OKBLUE + 'Name: ' + color.END + item[0] + color.OKBLUE + ' date of birth: ' + color.END + item[1].replace('-', '.'))
-                print(color.OKBLUE + 'In ' + color.END + item[2] + color.OKBLUE + ' days it will be ' + color.END + item[3] + color.OKBLUE + ' years\n' + color.END)
-                list_name.append(item[0])
-            while True:
-                uc: str = input(color.OKBLUE + 'Enter name to delete: ' + color.END)
-                if uc == 'Q':
-                    main()
-                # проверка name на сущ
-                if not (uc in list_name):
-                    print(color.RED + 'Name not found' + color.END)
-                elif uc in list_name:
-                    break
-                # конец проверки name
-            clearScr()
-            print(botdrlogo)
-            print(dec(color.RED + 'Delete' + color.END))
-            user_podtv: str = input(color.OKBLUE + 'Delete ' + uc + color.OKBLUE + ' ? [Y/n]: ' + color.END)
-            if user_podtv == 'n':
+        while True:
+            print('show everyone? [Y/n]\n')
+            uc: str = input(botdrPrompt)
+            if uc == 'Y':
+                clearScr()
+                print(botdrlogo)
+                print(dec(color.RED + 'Delete' + color.END))
+                cursor.execute("""select name, bday, cast (julianday(
+                    case
+                        when strftime('%m-%d', bday) < strftime('%m-%d', 'now')
+                        then strftime('%Y-', 'now', '+1 year')
+                        else strftime('%Y-', 'now')
+                    end || strftime('%m-%d', bday)
+                )-julianday('now') as int) as tillbday, cast (julianday(
+                    case
+                        when strftime('%m-%d', bday) > strftime('%m-%d', 'now')
+                        then strftime('%Y-', 'now') - strftime('%Y-', bday)
+                        else strftime('%Y-', 'now') - strftime('%Y-', bday) + '1 year'
+                    end
+                ) as int) as year_after_bday from users order by tillbday""")
+                results: numpy.ndarray = numpy.array(cursor.fetchall(), dtype=str)
+                for item in results:
+                    print(color.OKBLUE + 'Name: ' + color.END + item[0] + color.OKBLUE + ' date of birth: ' + color.END + item[1].replace('-', '.'))
+                    print(color.OKBLUE + 'In ' + color.END + item[2] + color.OKBLUE + ' days it will be ' + color.END + item[3] + color.OKBLUE + ' years\n' + color.END)
+                break
+            elif uc == 'n':
+                print('')
+                break
+            elif uc == 'Q':
                 main()
-            elif user_podtv == 'Y':
-                while True:
-                    try:
-                        account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
-                        if account_name == 'Q':
-                            main()
-                        conn.close
-                        cursor.execute("PRAGMA key={}".format(account_pass))
-                        cursor.execute('SELECT COUNT(name) FROM users')
-                    except:
-                        print(color.RED + 'Wrong password' + color.END)
-                    else:
-                        break
-            sql: str = ("""DELETE FROM users WHERE name = ?""")
+        while True:
+            uc: str = input(color.OKBLUE + 'Enter name to delete: ' + color.END)
+            if uc == 'Q':
+                main()
+            sql: str = ('SELECT COUNT(name) FROM users WHERE name = ?')
             cursor.execute(sql, (uc,))
-            conn.commit()
+            results: Tuple[int] = cursor.fetchone()
+            if results[0] == 0:
+                print(color.RED + 'Name not found' + color.END)
+            elif results[0] == 1:
+                break
+        clearScr()
+        print(botdrlogo)
+        print(dec(color.RED + 'Delete' + color.END))
+        user_podtv: str = input(color.OKBLUE + 'Delete ' + uc + color.OKBLUE + ' ? [Y/n]: ' + color.END)
+        if user_podtv == 'n':
             main()
+        elif user_podtv == 'Y':
+            while True:
+                try:
+                    account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
+                    if account_name == 'Q':
+                        main()
+                    conn.close
+                    cursor.execute("PRAGMA key={}".format(account_pass))
+                    cursor.execute('SELECT COUNT(name) FROM users')
+                except:
+                    print(color.RED + 'Wrong password' + color.END)
+                else:
+                    break
+        sql: str = ("""DELETE FROM users WHERE name = ?""")
+        cursor.execute(sql, (uc,))
+        conn.commit()
+        main()
     elif usercomand == '5':  # 5-edit
         print(botdrlogo)
         print(dec(color.RED + 'Edit' + color.END))
         cursor.execute('select count(name) from users')
-        results: Tuple[int] = cursor.fetchone()
-        if results[0] > 0:
+        results2: Tuple[int] = cursor.fetchone()
+        while True:
+            print('\nshow everyone?\n')
+            uc: str = input(botdrPrompt)
+            if uc == 'Y':
+                clearScr()
+                print(botdrlogo)
+                print(dec(color.RED + 'Edit' + color.END))
+                cursor.execute("""select name, bday, cast (julianday(
+                    case
+                        when strftime('%m-%d', bday) < strftime('%m-%d', 'now')
+                        then strftime('%Y-', 'now', '+1 year')
+                        else strftime('%Y-', 'now')
+                    end || strftime('%m-%d', bday)
+                )-julianday('now') as int) as tillbday, cast (julianday(
+                    case
+                        when strftime('%m-%d', bday) > strftime('%m-%d', 'now')
+                        then strftime('%Y-', 'now') - strftime('%Y-', bday)
+                        else strftime('%Y-', 'now') - strftime('%Y-', bday) + '1 year'
+                    end
+                ) as int) as year_after_bday from users order by tillbday""")
+                results: numpy.ndarray = numpy.array(cursor.fetchall(), dtype=str)
+                for item in results:
+                    print(color.OKBLUE + 'Name: ' + color.END + item[0] + color.OKBLUE + ' date of birth: ' + color.END + item[1].replace('-', '.'))
+                    print(color.OKBLUE + 'In ' + color.END + item[2] + color.OKBLUE + ' days it will be ' + color.END + item[3] + color.OKBLUE + ' years' + color.END)
+                break
+            elif uc == 'n':
+                break
+            elif uc == 'Q':
+                main()
+        if results2[0] > 0:
             while True:
-                uc_name: str = input(color.OKBLUE + 'Enter name: ' + color.END)
+                uc_name: str = input(color.OKBLUE + '\nEnter name: ' + color.END)
                 if uc_name == 'Q':
                     main()
                 sql: str = ('SELECT COUNT(name) FROM users WHERE name = ?')
@@ -439,7 +478,7 @@ def main() -> None:
             print(color.OKBLUE + 'Name: ' + color.END + str(results[0]) + color.OKBLUE + ' birth date: ' + color.END + str(results[1]))
             while True:
                 print(color.RED + '\n1' + color.END + ')--' + color.OKBLUE + 'Edit name' + color.END)
-                print(color.RED + '2' + color.END + ')--' + color.OKBLUE + 'Edit date' + color.END)
+                print(color.RED + '2' + color.END + ')--' + color.OKBLUE + 'Edit date\n' + color.END)
                 uc: str = input(botdrPrompt)
                 if uc == 'Q':
                     main()
