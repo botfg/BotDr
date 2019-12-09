@@ -20,6 +20,8 @@ import os
 import sys
 from typing import Tuple, List, Set, Union
 from datetime import date, datetime
+import subprocess
+
 
 
 import numpy
@@ -202,6 +204,7 @@ def main() -> None:
     print(color.RED + '6' + color.END + ')--' + color.OKBLUE + 'STATISTICS' + color.END)
     print(color.RED + '7' + color.END + ')--' + color.OKBLUE + 'ACCOUNT ACTIONS' + color.END)
     print(color.RED + '8' + color.END + ')--' + color.OKBLUE + 'SEARCH' + color.END)
+    print(color.RED + '9' + color.END + ')--' + color.OKBLUE + 'UPDATE APP' + color.END)
     print(color.RED + 'Q' + color.END + ')--' + color.OKBLUE + 'EXIT\n' + color.END)
     usercomand: str = input(botdrPrompt)
     clearScr()
@@ -940,6 +943,13 @@ def main() -> None:
                 print(dec(color.RED + 'Search' + color.END))
                 print(color.OKBLUE + 'Name: ' + color.END + item[0] + color.OKBLUE + ' date of birth: ' + color.END + item[1].replace('-', '.'))
                 print(color.OKBLUE + 'In ' + color.END + item[2] + color.OKBLUE + ' days it will be ' + color.END + item[3] + color.OKBLUE + ' years\n' + color.END)
+    elif usercomand == '9':
+        clearScr()
+        try:
+            os.system("python3 update.py")
+        except:
+            print('file not found')
+            main()
     elif usercomand == 'Q':  # Q-exit
         cursor.close()
         clearScr()
