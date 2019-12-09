@@ -84,6 +84,8 @@ elif float(version_next) > float(version_current):
             current_dit: str = os.getcwd()
             print(current_dit)
             for path in Path(current_dit + '/BotDr').iterdir():
+                if path == 'update.py':
+                    continue
                 if path.is_file():
                     shutil.copy(str(path), str(current_dit))
             path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'BotDr')
