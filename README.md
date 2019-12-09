@@ -23,6 +23,7 @@ libsqlcipher-dev
 ```bash
 pip3 install -r requirements.txt
 ```
+### [Changelog](https://github.com/botfg/BotDr/blob/master/CHANGELOG.md)
 
 #### License: [Apache License 2.0](https://apache.org/licenses/LICENSE-2.0.txt)
 
