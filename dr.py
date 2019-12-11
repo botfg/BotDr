@@ -20,10 +20,12 @@ import os
 import sys
 from typing import Tuple, List, Set, Union
 from datetime import date, datetime
-import subprocess
+import shutil
+import urllib.request
+from pathlib import Path
 
 
-
+import git
 import numpy
 import pyAesCrypt
 from pysqlcipher3 import dbapi2 as sqlite
@@ -945,11 +947,89 @@ def main() -> None:
                 print(color.OKBLUE + 'In ' + color.END + item[2] + color.OKBLUE + ' days it will be ' + color.END + item[3] + color.OKBLUE + ' years\n' + color.END)
     elif usercomand == '9':
         clearScr()
+        print(botdrlogo)
+        print(dec(color.RED + 'Update' + color.END))
+        current_dit: str = os.getcwd()
+        dir: bool = os.path.isdir('BotDr')
+        if dir:
+            path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'BotDr')
+            shutil.rmtree(path)
+        with open("version.txt") as file_handler:
+            for line in file_handler:
+                version_current: str = line
+        file_handler.close()
+        print('current version: ' + version_current)
         try:
-            os.system("python3 update.py")
+            urllib.request.urlopen("https://google.com")
         except:
-            print('file not found')
-            main()
+            print('no internet connection\n')
+            while True:
+                print('Q)-Go back\n')
+                uc = input(botdrPrompt)
+                if uc == 'Q':
+                    main()
+                    sys.exit()
+        git.Git().clone("https://github.com/botfg/BotDr.git")
+        with open("BotDr/version.txt") as file_handler:
+            for line in file_handler:
+                version_next: str = line
+        file_handler.close()
+        if float(version_next) <= float(version_current):
+            print('latest version installed: ' + str(version_current))
+            path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'BotDr')
+            shutil.rmtree(path)
+            while True:
+                print('Q)-Go back\n')
+                uc = input(botdrPrompt)
+                if uc == 'Q':
+                   main()
+                   sys.exit
+        elif float(version_next) > float(version_current):
+            clearScr()
+            print(botdrlogo)
+            print(dec(color.RED + 'Update' + color.END))
+            print('current version: ' + version_current)
+            print('new version: ' + version_next)
+            while True:
+                print('changes: https://github.com/botfg/BotDr/blob/master/CHANGELOG.md\n')
+                print('1)--update')
+                print("2)--don't update\n")
+                uc: str = input(botdrPrompt)
+                if uc == '1':
+                    try:
+                        for path in Path(current_dit + '/BotDr').iterdir():
+                            if path == 'update.py':
+                                continue
+                            if path.is_file():
+                                shutil.copy(str(path), str(current_dit))
+                        path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'BotDr')
+                        shutil.rmtree(path)
+                    except:
+                        clearScr()
+                        print(botdrlogo)
+                        print(dec(color.RED + 'Update' + color.END))
+                        print('current version: ' + version_current)
+                        print(color.RED + 'update error' + color.END)
+                    else:
+                        clearScr()
+                        print(botdrlogo)
+                        print(dec(color.RED + 'Update' + color.END))
+                        print('current version: ' + version_current)
+                        print(color.RED + 'update complete' + color.END)
+                        print('\nreload the program to apply the changes')
+                    while True:
+                        print('\nQ)-Go back\n')
+                        uc = input(botdrPrompt)
+                        if uc == 'Q':
+                            main()
+                            sys.exit()
+                elif uc == '2' or 'Q':
+                    path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'BotDr')
+                    shutil.rmtree(path)
+                    main()
+                    sys.exit()
+                else:
+                    continue
     elif usercomand == 'Q':  # Q-exit
         cursor.close()
         clearScr()
