@@ -1,7 +1,10 @@
 import os
-import subprocess
 import shutil
+import urllib.request
 from pathlib import Path
+import sys
+import git
+
 
 class color:
     HEADER: str = '\033[95m'
@@ -25,6 +28,7 @@ botdrlogo: str = (color.OKGREEN + '''
 /_____/\____/\__/  /_____/_/  
 ''' + color.END)
 
+current_dit: str = os.getcwd()
 
 def clearScr() -> None:
     os.system('clear')
@@ -44,13 +48,28 @@ if dir:
     path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'BotDr')
     shutil.rmtree(path)
 
-subprocess.call("git clone https://github.com/botfg/BotDr.git", shell=True)
-
-
 with open("version.txt") as file_handler:
     for line in file_handler:
         version_current: str = line
 file_handler.close()
+
+print('current version: ' + version_current)
+
+
+try:
+    urllib.request.urlopen("https://google.com")
+except:
+    print('no internet connection\n')
+    while True:
+        print('Q)-Go back\n')
+        uc = input(botdrPrompt)
+        if uc == 'Q':
+            os.system("python3 dr.py")
+            sys.exit()
+
+
+git.Git().clone("https://github.com/botfg/BotDr.git")
+
 
 with open("BotDr/version.txt") as file_handler:
     for line in file_handler:
@@ -58,7 +77,7 @@ with open("BotDr/version.txt") as file_handler:
 file_handler.close()
 
 if float(version_next) <= float(version_current):
-    print('\nlatest version installed ' + str(version_current))
+    print('latest version installed: ' + str(version_current))
     path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'BotDr')
     shutil.rmtree(path)
     while True:
@@ -81,7 +100,6 @@ elif float(version_next) > float(version_current):
         print("2)--don't update\n")
         uc: str = input(botdrPrompt)
         if uc == '1':
-            current_dit: str = os.getcwd()
             print(current_dit)
             for path in Path(current_dit + '/BotDr').iterdir():
                 if path == 'update.py':
