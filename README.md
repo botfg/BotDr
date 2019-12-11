@@ -11,6 +11,9 @@
 ### Installation [Linux](https://wikipedia.org/wiki/Linux) [![alt tag](http://icons.iconarchive.com/icons/dakirby309/simply-styled/32/OS-Linux-icon.png)](https://wikipedia.org/wiki/Linux)
 
 ```bash
+sudo apt install git
+```
+```bash
 git clone https://github.com/botfg/BotDr.git
 ```
 ```bash
