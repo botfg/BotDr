@@ -1,5 +1,5 @@
 # ==============================================================================
-# Copyright 2019 Nikolai Bartenev. Contacts: botfgbartenevfgzero76@gmail.com
+# Copyright 2020 Nikolai Bartenev. Contacts: botfgbartenevfgzero76@gmail.com
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ class color:
     RED = ('\033[91m')
     END = ('\033[0m')
 
-botdrPrompt = ("BotDr ~# ")
+botdrPrompt = (color.OKGREEN + "BotDr ~# " + color.END)
 
 botdrlogo = (color.OKGREEN + '''
     ____        __     ____      
@@ -121,7 +121,7 @@ def vhod() -> None:
                 cursor = conn.cursor()
                 cursor.execute("PRAGMA key={}".format(account_pass))
                 cursor.execute("""CREATE TABLE users
-                    ( name text NOT NULL, bday datetime NOT NULL)
+                    ( id integer primary key, name varchar(255) NOT NULL, bday datetime NOT NULL)
                         """)
                 conn.commit()
                 break
@@ -189,7 +189,7 @@ def main() -> None:
     print(color.RED + 'dr' + color.END + ')--' + color.OKBLUE +  'YIEW This month birthday: ' + color.END + str(birth_in_mounth))
     # end soon dr
     print(color.RED + '\n1' + color.END + ')--' + color.OKBLUE + 'ADD' + color.END)
-    print(color.RED + '2' + color.END + ')--' + color.OKBLUE + 'YIEW: ' + color.END + str(len(results)))
+    print(color.RED + '2' + color.END + ')--' + color.OKBLUE + 'YIEW:' + color.END + str(len(results)))
     print(color.RED + '3' + color.END + ')--' + color.OKBLUE + 'DELETE' + color.OKBLUE)
     print(color.RED + '4' + color.END + ')--' + color.OKBLUE + 'DELETE ALL' + color.END)
     print(color.RED + '5' + color.END + ')--' + color.OKBLUE + 'EDIT' + color.END)
@@ -424,7 +424,7 @@ def main() -> None:
         cursor.execute('select count(name) from users')
         results2 = cursor.fetchone()
         while True:
-            print('\nshow everyone?\n')
+            print(color.OKBLUE + 'show everyone? [Y/n]\n' + color.END)
             uc = input(botdrPrompt)
             if uc == 'Y':
                 clearScr()
@@ -446,7 +446,7 @@ def main() -> None:
                 results = numpy.array(cursor.fetchall(), dtype=str)
                 for item in results:
                     print(color.OKBLUE + 'Name: ' + color.END + item[0] + color.OKBLUE + ' date of birth: ' + color.END + item[1].replace('-', '.'))
-                    print(color.OKBLUE + 'In ' + color.END + item[2] + color.OKBLUE + ' days it will be ' + color.END + item[3] + color.OKBLUE + ' years' + color.END)
+                    print(color.OKBLUE + 'In ' + color.END + item[2] + color.OKBLUE + ' days it will be ' + color.END + item[3] + color.OKBLUE + ' years\n' + color.END)
                 break
             elif uc == 'n':
                 break
@@ -470,7 +470,7 @@ def main() -> None:
             sql = ('SELECT * FROM users WHERE name = ?')
             cursor.execute(sql, (uc_name,))
             results = cursor.fetchone()
-            print(color.OKBLUE + 'Name: ' + color.END + str(results[0]) + color.OKBLUE + ' birth date: ' + color.END + str(results[1]))
+            print(color.OKBLUE + 'Name: ' + color.END + str(results[1]) + color.OKBLUE + ' birth date: ' + color.END + str(results[2]))
             while True:
                 print(color.RED + '\n1' + color.END + ')--' + color.OKBLUE + 'Edit name' + color.END)
                 print(color.RED + '2' + color.END + ')--' + color.OKBLUE + 'Edit date\n' + color.END)
