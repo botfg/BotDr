@@ -1159,7 +1159,3 @@ def super_main():
         createConfig(path)
     vhod()
     main()
-
-
-
-super_main()
