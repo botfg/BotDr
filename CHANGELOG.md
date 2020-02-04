@@ -1,5 +1,8 @@
 # <center> CHANGELOG for BotDr </center>
 
+#### update 1.4.1(soon)
+* ##### added info item in settings
+* ##### translation edits
 
 #### update 1.4
 * ##### Added the ability to select an entry option in the settings section
