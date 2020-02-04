@@ -18,8 +18,10 @@ import csv
 import getpass
 import os
 import sys
+import hashlib
 from datetime import date, datetime
-
+from hashlib import sha3_512
+import configparser
 
 import numpy
 import pyAesCrypt
@@ -33,7 +35,9 @@ class color:
     RED = ('\033[91m')
     END = ('\033[0m')
 
+
 botdrPrompt = (color.OKGREEN + "BotDr ~# " + color.END)
+
 
 botdrlogo = (color.OKGREEN + '''
     ____        __     ____      
@@ -43,7 +47,24 @@ botdrlogo = (color.OKGREEN + '''
 /_____/\____/\__/  /_____/_/  
 ''' + color.END)
 
-db_dir = ('')
+
+db_dir = ('/home/{}/.botdr/'.format(getpass.getuser()))
+
+
+papka = os.path.isdir(db_dir)
+if papka == False:
+    os.mkdir(db_dir)
+
+
+def hash(string: str) -> str:
+    signature = sha3_512(string.encode()).hexdigest()
+    return signature
+    
+    
+def crypt_aes(file, password) -> None:
+    buffer_size = 512 * 2048
+    pyAesCrypt.encryptFile(file, str(file + '.aes'), password, buffer_size)
+    os.remove(file)
 
 
 def clearScr() -> None:
@@ -54,117 +75,196 @@ def dec(string: str) -> str:
     length_string = (44 - len(string)) // 2     # 34
     decor = str((length_string * '-') + string + (length_string * '-') + '\n')
     return decor
-    
+
+
+def createConfig(path):
+    """
+    Create a config file
+    """
+    config = configparser.ConfigParser()
+    config.add_section("Settings")
+    config.set("Settings", "accounts status", "off")
+    with open(path, "w") as config_file:
+        config.write(config_file)
+    config_file.close()
+
 
 def vhod() -> None:
     global account_name, account_pass, conn, cursor
-    clearScr()
-    print(botdrlogo)
-    print('enter Q to go to the main menu\n')
-    print(dec(color.RED + 'Login' + color.END))
-    print(color.RED +'1' + color.END + ')--' + color.OKBLUE + 'sign up' + color.END)
-    print(color.RED +'2' + color.END + ')--' + color.OKBLUE + 'sign in' + color.END)
-    print(color.RED +'3' + color.END + ')--' + color.OKBLUE + 'exit\n' + color.END)
-    u_a = input(botdrPrompt)
-    if u_a == '3':
-        clearScr()
-        sys.exit()
-    elif u_a == '1':
+    path = (db_dir + "botdr.ini")
+    config = configparser.ConfigParser()
+    config.read(path)
+    accounts_status = config.get("Settings", "accounts status")
+    if accounts_status == "on":
         clearScr()
         print(botdrlogo)
-        print(dec(color.RED + 'sign up' + color.END))
-        # check account_existence
-        while True:
-            account_name = input(color.OKBLUE + 'login: ' + color.END)
-            if account_name == 'Q':
-                vhod()
-            elif len(account_name) < 3:
-                print(color.RED + 'login length must be more than 3 characters' + color.END)
-                continue
-            x1 = os.path.isfile(db_dir + account_name + '.db')
-            if x1:
-                print(color.RED + 'an account with that name already exists' + color.END)
-            elif not x1:
-                break
-        # end check account_existence
-        while True:
-            password1 = getpass.getpass(color.OKBLUE + 'enter password: ' + color.END)
-            if password1 == 'Q':
-                vhod()
-            elif password1 == account_name:
-                print(color.RED + 'login cannot be a password' + color.END)
-            else:
-                break
-        password2 = getpass.getpass(color.OKBLUE + 'repeat password: ' + color.END)
-        if password2 == 'Q':
-            vhod()
-        while True:
-            if password1 == password2:
-                account_pass = password1
-                break
-            elif password1 != password2:
-                print(color.RED + 'different passwords' + color.END)
-                password1 = getpass.getpass(color.OKBLUE + 'enter password: ' + color.END)
-                password2 = getpass.getpass(color.OKBLUE + 'repeat password: ' + color.END)
-                if password1 or password2 == 'Q':
-                    vhod()
-        while True:
-            u_podtver = input(color.OKBLUE + '[Y/n] add ' + color.END + account_name + ': ')
-            if u_podtver == 'n':
-                vhod()
-                break
-            elif u_podtver == 'Y':
-                # make users db
-                name_db = (db_dir + account_name + '.db')
-                print(name_db)
-                conn = sqlcipher.connect(name_db)
-                cursor = conn.cursor()
-                cursor.execute("PRAGMA key={}".format(account_pass))
-                cursor.execute("""CREATE TABLE users
-                    ( id integer primary key, name varchar(255) NOT NULL, bday datetime NOT NULL)
-                        """)
-                conn.commit()
-                break
-            else:
-                print(color.RED + 'wrong command' + color.END)
-    elif u_a == '2':
-        clearScr()
-        print(botdrlogo)
-        print(dec(color.RED + 'sign in' + color.END))
-        # check account_existence
-        while True:
-            account_name = input(color.OKBLUE + 'login: ' + color.END)
-            if account_name == 'Q':
-                vhod()
-            x = os.path.isfile(db_dir + account_name + '.db')
-            if x:
-                break
-            elif not x:
-                print(color.RED +  'account with this name was not found' + color.END)
+        print('enter Q to go to the main menu\n')
+        print(dec(color.RED + 'Login' + color.END))
+        print(color.RED +'1' + color.END + ')--' + color.OKBLUE + 'sign up' + color.END)
+        print(color.RED +'2' + color.END + ')--' + color.OKBLUE + 'sign in' + color.END)
+        print(color.RED +'3' + color.END + ')--' + color.OKBLUE + 'exit\n' + color.END)
+        u_a = input(botdrPrompt)
+        if u_a == '3':
+            clearScr()
+            sys.exit()
+        elif u_a == '1':
+            clearScr()
+            print(botdrlogo)
+            print(dec(color.RED + 'sign up' + color.END))
+            # check account_existence
+            while True:
+                account_name = input(color.OKBLUE + 'login: ' + color.END)
                 if account_name == 'Q':
                     vhod()
-        # end check account_existence
-        name_db = (db_dir + account_name + '.db')
-        conn = sqlcipher.connect(name_db)
-        cursor = conn.cursor()
+                elif len(account_name) < 3:
+                    print(color.RED + 'login length must be more than 3 characters' + color.END)
+                    continue
+                x1 = os.path.isfile(db_dir + account_name + '.db')
+                if x1:
+                    print(color.RED + 'an account with that name already exists' + color.END)
+                elif not x1:
+                    break
+            # end check account_existence
+            while True:
+                password1 = getpass.getpass(color.OKBLUE + 'enter password: ' + color.END)
+                if password1 == 'Q':
+                    vhod()
+                elif password1 == account_name:
+                    print(color.RED + 'login cannot be a password' + color.END)
+                else:
+                    break
+            password2 = getpass.getpass(color.OKBLUE + 'repeat password: ' + color.END)
+            if password2 == 'Q':
+                vhod()
+            while True:
+                if password1 == password2:
+                    account_pass = password1
+                    break
+                elif password1 != password2:
+                    print(color.RED + 'different passwords' + color.END)
+                    password1 = getpass.getpass(color.OKBLUE + 'enter password: ' + color.END)
+                    password2 = getpass.getpass(color.OKBLUE + 'repeat password: ' + color.END)
+                    if password1 or password2 == 'Q':
+                        vhod()
+            while True:
+                u_podtver = input(color.OKBLUE + '[Y/n] add ' + color.END + account_name + ': ')
+                if u_podtver == 'n':
+                    vhod()
+                    break
+                elif u_podtver == 'Y':
+                    # make users db
+                    name_db = (db_dir + account_name + '.db')
+                    conn = sqlcipher.connect(name_db)
+                    cursor = conn.cursor()
+                    cursor.execute("PRAGMA key={}".format(account_pass))
+                    cursor.execute("""CREATE TABLE users
+                        ( id integer primary key, name varchar(255) NOT NULL, bday datetime NOT NULL)
+                            """)
+                    conn.commit()
+                    break
+                else:
+                    print(color.RED + 'wrong command' + color.END)
+        elif u_a == '2':
+            clearScr()
+            print(botdrlogo)
+            print(dec(color.RED + 'sign in' + color.END))
+            # check account_existence
+            while True:
+                account_name = input(color.OKBLUE + 'login: ' + color.END)
+                if account_name == 'Q':
+                    vhod()
+                x = os.path.isfile(db_dir + account_name + '.db')
+                if x:
+                    break
+                elif not x:
+                    print(color.RED +  'account with this name was not found' + color.END)
+                    if account_name == 'Q':
+                        vhod()
+            # end check account_existence
+            name_db = (db_dir + account_name + '.db')
+            conn = sqlcipher.connect(name_db)
+            cursor = conn.cursor()
+            clearScr()
+            print(botdrlogo)
+            print(dec(color.RED + 'sign in ' + color.END + account_name))
+            while True:
+                try:
+                    account_pass = getpass.getpass(color.OKBLUE + 'enter password: ' + color.END)
+                    if account_pass == 'Q':
+                        vhod()
+                    cursor.execute("PRAGMA key={}".format(account_pass))
+                    cursor.execute('SELECT COUNT(name) FROM users')
+                except:
+                    print(color.RED + 'wrong password' + color.END)
+                else:
+                    break
+        else:
+            #print('wrong command')
+            vhod()
+    elif accounts_status == "off":
         clearScr()
         print(botdrlogo)
-        print(dec(color.RED + 'sign in ' + color.END + account_name))
-        while True:
-            try:
-                account_pass = getpass.getpass(color.OKBLUE + 'enter password: ' + color.END)
-                if account_pass == 'Q':
+        print('enter Q to go to the main menu\n')
+        print(dec(color.RED + 'sign up' + color.END))
+        x1 = os.path.isfile(db_dir + 'main.db')
+        if x1 == False:
+            while True:
+                password1 = getpass.getpass(color.OKBLUE + 'enter password: ' + color.END)
+                if password1 == 'Q':
                     vhod()
-                cursor.execute("PRAGMA key={}".format(account_pass))
-                cursor.execute('SELECT COUNT(name) FROM users')
-            except:
-                print(color.RED + 'wrong password' + color.END)
-            else:
-                break
-    else:
-        #print('wrong command')
-        vhod()
-
+                else:
+                    break
+            password2 = getpass.getpass(color.OKBLUE + 'repeat password: ' + color.END)
+            if password2 == 'Q':
+                vhod()
+            while True:
+                if password1 == password2:
+                    account_pass = password1
+                    break
+                elif password1 != password2:
+                    print(color.RED + 'different passwords' + color.END)
+                    password1 = getpass.getpass(color.OKBLUE + 'enter password: ' + color.END)
+                    password2 = getpass.getpass(color.OKBLUE + 'repeat password: ' + color.END)
+                    if password1 or password2 == 'Q':
+                        vhod()
+            while True:
+                u_podtver = input(color.OKBLUE + '[Y/n] add account: ' + color.END)
+                if u_podtver == 'n':
+                    vhod()
+                    break
+                elif u_podtver == 'Y':
+                    # make users db
+                    name_db = (db_dir + 'main.db')
+                    conn = sqlcipher.connect(name_db)
+                    cursor = conn.cursor()
+                    cursor.execute("PRAGMA key={}".format(account_pass))
+                    cursor.execute("""CREATE TABLE users
+                        ( id integer primary key, name varchar(255) NOT NULL, bday datetime NOT NULL)
+                            """)
+                    conn.commit()
+                    break
+                else:
+                    print(color.RED + 'wrong command' + color.END)        
+        if x1 == True:
+            name_db = (db_dir + 'main.db')
+            conn = sqlcipher.connect(name_db)
+            cursor = conn.cursor()
+            clearScr()
+            print(botdrlogo)
+            print(dec(color.RED + 'sign in ' + color.END))
+            while True:
+                try:
+                    account_pass = getpass.getpass(color.OKBLUE + 'enter password: ' + color.END)
+                    if account_pass == 'Q':
+                        vhod()
+                    cursor.execute("PRAGMA key={}".format(account_pass))
+                    cursor.execute('SELECT COUNT(name) FROM users')
+                except:
+                    print(color.RED + 'wrong password' + color.END)
+                else:
+                    break
+    
+    
 
 def main() -> None:
     global account_name, account_pass, cursor, conn
@@ -172,13 +272,13 @@ def main() -> None:
     print(botdrlogo)
     print(dec(color.RED + 'options' + color.END))
     # soon dr
-    cursor.execute("""select cast (julianday(
+    cursor.execute("""select cast ((julianday(
             case
                 when strftime('%m-%d', bday) < strftime('%m-%d', 'now')
                 then strftime('%Y-', 'now', '+1 year')
                 else strftime('%Y-', 'now')
             end || strftime('%m-%d', bday)
-        )-julianday('now') as int) as tillbday from users""")
+        )-julianday('now')) + 1 as int) as tillbday from users""")
     results = numpy.array(cursor.fetchall(), dtype=int)
     birth_in_mounth = 0
     now = datetime.now()
@@ -196,19 +296,20 @@ def main() -> None:
     print(color.RED + '6' + color.END + ')--' + color.OKBLUE + 'STATISTICS' + color.END)
     print(color.RED + '7' + color.END + ')--' + color.OKBLUE + 'ACCOUNT ACTIONS' + color.END)
     print(color.RED + '8' + color.END + ')--' + color.OKBLUE + 'SEARCH' + color.END)
+    print(color.RED + '9' + color.END + ')--' + color.OKBLUE + 'SETTINGS' + color.END)
     print(color.RED + 'Q' + color.END + ')--' + color.OKBLUE + 'EXIT\n' + color.END)
     usercomand = input(botdrPrompt)
     clearScr()
     if usercomand == "dr":
         print(botdrlogo)
         print(dec(color.RED + 'Birthday in this month: ' + color.END + str(birth_in_mounth))) 
-        cursor.execute("""select name, bday, cast (julianday(
+        cursor.execute("""select name, bday, cast ((julianday(
             case
                 when strftime('%m-%d', bday) < strftime('%m-%d', 'now')
                 then strftime('%Y-', 'now', '+1 year')
                 else strftime('%Y-', 'now')
             end || strftime('%m-%d', bday)
-        )-julianday('now') as int) as tillbday, cast (julianday(
+        )-julianday('now')) + 1 as int) as tillbday, cast (julianday(
             case
                 when strftime('%m-%d', bday) > strftime('%m-%d', 'now')
                 then strftime('%Y-', 'now') - strftime('%Y-', bday)
@@ -283,13 +384,13 @@ def main() -> None:
         results = numpy.array(cursor.fetchall(), dtype=str)
         if not results.size:
             main()
-        cursor.execute("""select name, bday, cast (julianday(
+        cursor.execute("""select name, bday, cast ((julianday(
             case
                 when strftime('%m-%d', bday) < strftime('%m-%d', 'now')
                 then strftime('%Y-', 'now', '+1 year')
                 else strftime('%Y-', 'now')
             end || strftime('%m-%d', bday)
-        )-julianday('now') as int) as tillbday, cast (julianday(
+        )-julianday('now')) as int) as tillbday, cast (julianday(
             case
                 when strftime('%m-%d', bday) > strftime('%m-%d', 'now')
                 then strftime('%Y-', 'now') - strftime('%Y-', bday)
@@ -311,13 +412,13 @@ def main() -> None:
         print(botdrlogo)
         print(dec(color.RED + 'Delete all' + color.END))
         cursor.execute("PRAGMA key={}".format(account_pass))
-        cursor.execute("""select name, bday, cast (julianday(
+        cursor.execute("""select name, bday, cast ((julianday(
             case
                 when strftime('%m-%d', bday) < strftime('%m-%d', 'now')
                 then strftime('%Y-', 'now', '+1 year')
                 else strftime('%Y-', 'now')
             end || strftime('%m-%d', bday)
-        )-julianday('now') as int) as tillbday, cast (julianday(
+        )-julianday('now')) + 1 as int) as tillbday, cast (julianday(
             case
                 when strftime('%m-%d', bday) > strftime('%m-%d', 'now')
                 then strftime('%Y-', 'now') - strftime('%Y-', bday)
@@ -361,13 +462,13 @@ def main() -> None:
                 clearScr()
                 print(botdrlogo)
                 print(dec(color.RED + 'Delete' + color.END))
-                cursor.execute("""select name, bday, cast (julianday(
+                cursor.execute("""select name, bday, cast ((julianday(
                     case
                         when strftime('%m-%d', bday) < strftime('%m-%d', 'now')
                         then strftime('%Y-', 'now', '+1 year')
                         else strftime('%Y-', 'now')
                     end || strftime('%m-%d', bday)
-                )-julianday('now') as int) as tillbday, cast (julianday(
+                )-julianday('now')) + 1 as int) as tillbday, cast (julianday(
                     case
                         when strftime('%m-%d', bday) > strftime('%m-%d', 'now')
                         then strftime('%Y-', 'now') - strftime('%Y-', bday)
@@ -430,13 +531,13 @@ def main() -> None:
                 clearScr()
                 print(botdrlogo)
                 print(dec(color.RED + 'Edit' + color.END))
-                cursor.execute("""select name, bday, cast (julianday(
+                cursor.execute("""select name, bday, cast ((julianday(
                     case
                         when strftime('%m-%d', bday) < strftime('%m-%d', 'now')
                         then strftime('%Y-', 'now', '+1 year')
                         else strftime('%Y-', 'now')
                     end || strftime('%m-%d', bday)
-                )-julianday('now') as int) as tillbday, cast (julianday(
+                )-julianday('now')) + 1 as int) as tillbday, cast (julianday(
                     case
                         when strftime('%m-%d', bday) > strftime('%m-%d', 'now')
                         then strftime('%Y-', 'now') - strftime('%Y-', bday)
@@ -566,13 +667,13 @@ def main() -> None:
                     year = 366
             else:
                 year = 365
-            cursor.execute("""select cast (julianday(
+            cursor.execute("""select cast ((julianday(
                 case
                     when strftime('%m-%d', bday) < strftime('%m-%d', 'now')
                     then strftime('%Y-', 'now', '+1 year')
                     else strftime('%Y-', 'now')
                 end || strftime('%m-%d', bday)
-            )-julianday('now') as int) as tillbday, cast (julianday(
+            )-julianday('now')) + 1 as int) as tillbday, cast (julianday(
                 case
                     when strftime('%m-%d', bday) > strftime('%m-%d', 'now')
                     then strftime('%Y-', 'now') - strftime('%Y-', bday)
@@ -814,11 +915,11 @@ def main() -> None:
                         elif uc == 'n':
                             while True:
                                 name_dir = input(color.OKBLUE + 'Enter dir: ' + color.END)
-                                if name_export == 'Q':
+                                if name_dir == 'Q':
                                     main()                 
-                                if len(name_export) == 0:
+                                if len(name_dir) == 0:
                                     print(color.RED + 'Incorrect name' + color.END)
-                                elif len(name_export) > 0:
+                                elif len(name_dir) > 0:
                                     break
                                 x1 = os.path.isdir(name_dir)
                                 if x1:
@@ -867,11 +968,11 @@ def main() -> None:
                         elif uc == 'Y':
                             while True:
                                 name_dir = input(color.OKBLUE + 'Enter dir: ' + color.END)
-                                if name_export == 'Q':
+                                if name_dir == 'Q':
                                     main()                 
-                                if len(name_export) == 0:
+                                if len(name_dir) == 0:
                                     print(color.RED + 'Incorrect name' + color.END)
-                                elif len(name_export) > 0:
+                                elif len(name_dir) > 0:
                                     break
                                 x1 = os.path.isdir(name_dir)
                                 if x1:
@@ -936,6 +1037,7 @@ def main() -> None:
                 print(color.RED + 'Wrong command' + color.END)
         main()
     elif usercomand == '8':
+        clearScr()
         print(botdrlogo)
         print(dec(color.RED + 'Search' + color.END))
         cursor.execute('select count(name) from users')
@@ -956,13 +1058,13 @@ def main() -> None:
                     print(dec(color.RED + 'Search' + color.END))
                 elif results[0] == 1:
                     break
-            sql = ("""select name, bday, cast (julianday(
+            sql = ("""select name, bday, cast ((julianday(
                 case
                     when strftime('%m-%d', bday) < strftime('%m-%d', 'now')
                     then strftime('%Y-', 'now', '+1 year')
                     else strftime('%Y-', 'now')
                 end || strftime('%m-%d', bday)
-            )-julianday('now') as int) as tillbday, cast (julianday(
+            )-julianday('now')) + 1 as int) as tillbday, cast (julianday(
                 case
                     when strftime('%m-%d', bday) > strftime('%m-%d', 'now')
                     then strftime('%Y-', 'now') - strftime('%Y-', bday)
@@ -987,6 +1089,62 @@ def main() -> None:
                 print(dec(color.RED + 'Search' + color.END))
                 print(color.OKBLUE + 'Name: ' + color.END + item[0] + color.OKBLUE + ' date of birth: ' + color.END + item[1].replace('-', '.'))
                 print(color.OKBLUE + 'In ' + color.END + item[2] + color.OKBLUE + ' days it will be ' + color.END + item[3] + color.OKBLUE + ' years\n' + color.END)
+    elif usercomand == '9': # settings
+        while True:
+            clearScr()
+            print(botdrlogo)
+            print(dec(color.RED + 'Settings' + color.END))
+            path = (db_dir + "botdr.ini")
+            if not os.path.exists(path):
+                createConfig(path)
+            config = configparser.ConfigParser()
+            config.read(path)
+            accounts_status = config.get("Settings", "accounts status")
+            print(color.RED + '1' + color.END + ')--' + color.OKBLUE + 'on/off accounts status: ' + color.OKBLUE + color.END + color.OKGREEN + accounts_status + color.END)
+            while True:
+                print(color.RED + '\nQ)--GO BACK\n' + color.END)
+                uc = input(botdrPrompt)
+                if uc == '1':
+                    if accounts_status == 'off':
+                        config.set("Settings", "accounts status", "on")
+                        clearScr()
+                        print(botdrlogo)
+                        print(dec(color.RED + 'Accounts status' + color.END))
+                        while True:
+                            new_account_name = input(color.OKBLUE + 'придумай логин для основного аккаунта: ' + color.END)
+                            x1 = os.path.isfile(new_account_name)
+                            if new_account_name == "Q":
+                                main()
+                            elif len(new_account_name) < 3:
+                                print(color.RED + 'login length must be more than 3 characters' + color.END)
+                            elif x1 == True:
+                                print(color.RED + 'an account with that name already exists' + color.END)
+                            else:
+                                break
+                        os.rename(db_dir + 'main.db', db_dir + str(new_account_name) + '.db')
+                        config.set("Settings", "accounts status", "on")
+                    elif accounts_status == 'on':
+                        clearScr()
+                        print(botdrlogo)
+                        print(dec(color.RED + 'Accounts status' + color.END))
+                        while True:
+                            new_account_name = input(color.OKBLUE + 'choose which account to make the main: ' + color.END)
+                            x1 = os.path.isfile(new_account_name)
+                            if new_account_name == "Q":
+                                main()
+                            elif len(new_account_name) == 0 or x1 == False:
+                                print(color.RED + 'account not found' + color.END)
+                            else:
+                                break
+                        os.rename(db_dir + str(new_account_name) + '.db', db_dir + 'main.db')
+                        config.set("Settings", "accounts status", "off")
+                    with open(path, "w") as config_file:
+                        config.write(config_file)
+                    config_file.close()
+                    main()
+                elif uc == 'Q':
+                    main()
+                    break    
     elif usercomand == 'Q':  # Q-exit
         cursor.close()
         clearScr()
@@ -996,5 +1154,12 @@ def main() -> None:
 
 
 def super_main():
+    path = (db_dir + "botdr.ini")
+    if not os.path.exists(path):
+        createConfig(path)
     vhod()
     main()
+
+
+
+super_main()
