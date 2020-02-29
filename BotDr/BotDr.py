@@ -22,11 +22,11 @@ import hashlib
 from datetime import date, datetime
 from hashlib import sha3_512
 import configparser
+import BotDr
 
 import numpy
 import pyAesCrypt
 from pysqlcipher3 import dbapi2 as sqlcipher
-
 
 class color:
     OKBLUE = ('\033[94m')
@@ -116,6 +116,9 @@ def vhod() -> None:
                 account_name = input(color.OKBLUE + 'login: ' + color.END)
                 if account_name == 'Q':
                     vhod()
+                elif account_name == 'main_botdr.db':
+                    print(color.RED + 'invalid name' + color.END)
+                    continue
                 elif len(account_name) < 3:
                     print(color.RED + 'login length must be more than 3 characters' + color.END)
                     continue
@@ -172,7 +175,8 @@ def vhod() -> None:
             while True:
                 account_name = input(color.OKBLUE + 'login: ' + color.END)
                 if account_name == 'Q':
-                    vhod()
+                    clearScr()
+                    sys.exit()
                 x = os.path.isfile(db_dir + account_name + '.db')
                 if x:
                     break
@@ -206,12 +210,13 @@ def vhod() -> None:
         print(botdrlogo)
         print('enter Q to go to the main menu\n')
         print(dec(color.RED + 'sign up' + color.END))
-        x1 = os.path.isfile(db_dir + 'main.db')
+        x1 = os.path.isfile(db_dir + 'main_botdr.db')
         if x1 == False:
             while True:
                 password1 = getpass.getpass(color.OKBLUE + 'enter password: ' + color.END)
                 if password1 == 'Q':
-                    vhod()
+                    clearScr()
+                    sys.exit()
                 else:
                     break
             password2 = getpass.getpass(color.OKBLUE + 'repeat password: ' + color.END)
@@ -246,7 +251,7 @@ def vhod() -> None:
                 else:
                     print(color.RED + 'wrong command' + color.END)        
         if x1 == True:
-            name_db = (db_dir + 'main.db')
+            name_db = (db_dir + 'main_botdr.db')
             conn = sqlcipher.connect(name_db)
             cursor = conn.cursor()
             clearScr()
@@ -308,8 +313,8 @@ def main() -> None:
                 when strftime('%m-%d', bday) < strftime('%m-%d', 'now')
                 then strftime('%Y-', 'now', '+1 year')
                 else strftime('%Y-', 'now')
-            end || strftime('%m-%d', bday)
-        )-julianday('now')) + 1 as int) as tillbday, cast (julianday(
+            end || strftime('%m-%d', bday, '+1 day')
+        )-julianday('now')) int) as tillbday, cast (julianday(
             case
                 when strftime('%m-%d', bday) > strftime('%m-%d', 'now')
                 then strftime('%Y-', 'now') - strftime('%Y-', bday)
@@ -389,7 +394,7 @@ def main() -> None:
                 when strftime('%m-%d', bday) < strftime('%m-%d', 'now')
                 then strftime('%Y-', 'now', '+1 year')
                 else strftime('%Y-', 'now')
-            end || strftime('%m-%d', bday)
+            end || strftime('%m-%d', bday, '+1 day')
         )-julianday('now')) as int) as tillbday, cast (julianday(
             case
                 when strftime('%m-%d', bday) > strftime('%m-%d', 'now')
@@ -417,8 +422,8 @@ def main() -> None:
                 when strftime('%m-%d', bday) < strftime('%m-%d', 'now')
                 then strftime('%Y-', 'now', '+1 year')
                 else strftime('%Y-', 'now')
-            end || strftime('%m-%d', bday)
-        )-julianday('now')) + 1 as int) as tillbday, cast (julianday(
+            end || strftime('%m-%d', bday, '+1 day')
+        )-julianday('now')) as int) as tillbday, cast (julianday(
             case
                 when strftime('%m-%d', bday) > strftime('%m-%d', 'now')
                 then strftime('%Y-', 'now') - strftime('%Y-', bday)
@@ -456,7 +461,7 @@ def main() -> None:
         print(botdrlogo)
         print(dec(color.RED + 'Delete' + color.END))
         while True:
-            print('show everyone? [Y/n]\n')
+            print(color.OKBLUE + 'show everyone? [Y/n]\n' + color.END)
             uc = input(botdrPrompt)
             if uc == 'Y':
                 clearScr()
@@ -467,8 +472,8 @@ def main() -> None:
                         when strftime('%m-%d', bday) < strftime('%m-%d', 'now')
                         then strftime('%Y-', 'now', '+1 year')
                         else strftime('%Y-', 'now')
-                    end || strftime('%m-%d', bday)
-                )-julianday('now')) + 1 as int) as tillbday, cast (julianday(
+                    end || strftime('%m-%d', bday, '+1 day')
+                )-julianday('now')) as int) as tillbday, cast (julianday(
                     case
                         when strftime('%m-%d', bday) > strftime('%m-%d', 'now')
                         then strftime('%Y-', 'now') - strftime('%Y-', bday)
@@ -536,8 +541,8 @@ def main() -> None:
                         when strftime('%m-%d', bday) < strftime('%m-%d', 'now')
                         then strftime('%Y-', 'now', '+1 year')
                         else strftime('%Y-', 'now')
-                    end || strftime('%m-%d', bday)
-                )-julianday('now')) + 1 as int) as tillbday, cast (julianday(
+                    end || strftime('%m-%d', bday, '+1 day')
+                )-julianday('now')) as int) as tillbday, cast (julianday(
                     case
                         when strftime('%m-%d', bday) > strftime('%m-%d', 'now')
                         then strftime('%Y-', 'now') - strftime('%Y-', bday)
@@ -672,8 +677,8 @@ def main() -> None:
                     when strftime('%m-%d', bday) < strftime('%m-%d', 'now')
                     then strftime('%Y-', 'now', '+1 year')
                     else strftime('%Y-', 'now')
-                end || strftime('%m-%d', bday)
-            )-julianday('now')) + 1 as int) as tillbday, cast (julianday(
+                end || strftime('%m-%d', bday, '+1 day')
+            )-julianday('now')) as int) as tillbday, cast (julianday(
                 case
                     when strftime('%m-%d', bday) > strftime('%m-%d', 'now')
                     then strftime('%Y-', 'now') - strftime('%Y-', bday)
@@ -1063,8 +1068,8 @@ def main() -> None:
                     when strftime('%m-%d', bday) < strftime('%m-%d', 'now')
                     then strftime('%Y-', 'now', '+1 year')
                     else strftime('%Y-', 'now')
-                end || strftime('%m-%d', bday)
-            )-julianday('now')) + 1 as int) as tillbday, cast (julianday(
+                end || strftime('%m-%d', bday, '+1 day')
+            )-julianday('now')) as int) as tillbday, cast (julianday(
                 case
                     when strftime('%m-%d', bday) > strftime('%m-%d', 'now')
                     then strftime('%Y-', 'now') - strftime('%Y-', bday)
@@ -1100,7 +1105,8 @@ def main() -> None:
             config = configparser.ConfigParser()
             config.read(path)
             accounts_status = config.get("Settings", "accounts status")
-            print(color.RED + '1' + color.END + ')--' + color.OKBLUE + 'on/off accounts status: ' + color.OKBLUE + color.END + color.OKGREEN + accounts_status + color.END)
+            print(color.RED + '1' + color.END + ')--' + color.OKBLUE + 'on/off accounts status: ' + color.END + color.OKGREEN + accounts_status + color.END)
+            print(color.RED + '2' + color.END + ')--' + color.OKBLUE + 'info' + color.END)
             while True:
                 print(color.RED + '\nQ)--GO BACK\n' + color.END)
                 uc = input(botdrPrompt)
@@ -1111,7 +1117,7 @@ def main() -> None:
                         print(botdrlogo)
                         print(dec(color.RED + 'Accounts status' + color.END))
                         while True:
-                            new_account_name = input(color.OKBLUE + 'придумай логин для основного аккаунта: ' + color.END)
+                            new_account_name = input(color.OKBLUE + 'enter a new login for the main account: ' + color.END)
                             x1 = os.path.isfile(new_account_name)
                             if new_account_name == "Q":
                                 main()
@@ -1121,7 +1127,7 @@ def main() -> None:
                                 print(color.RED + 'an account with that name already exists' + color.END)
                             else:
                                 break
-                        os.rename(db_dir + 'main.db', db_dir + str(new_account_name) + '.db')
+                        os.rename(db_dir + 'main_botdr.db', db_dir + str(new_account_name) + '.db')
                         config.set("Settings", "accounts status", "on")
                     elif accounts_status == 'on':
                         clearScr()
@@ -1136,12 +1142,26 @@ def main() -> None:
                                 print(color.RED + 'account not found' + color.END)
                             else:
                                 break
-                        os.rename(db_dir + str(new_account_name) + '.db', db_dir + 'main.db')
+                        os.rename(db_dir + str(new_account_name) + '.db', db_dir + 'main_botdr.db')
                         config.set("Settings", "accounts status", "off")
                     with open(path, "w") as config_file:
                         config.write(config_file)
                     config_file.close()
                     main()
+                elif uc == '2':
+                    clearScr()
+                    print(botdrlogo)
+                    print(dec(color.RED + 'Info' + color.END))
+                    print(color.OKGREEN + 'version: ' + color.END + '1.4.1')
+                    print(color.OKGREEN + 'license: ' + color.END + 'Apache License Version 2.0')
+                    print(color.OKGREEN + 'author: ' + color.END + 'botfg76')
+                    print(color.OKGREEN + 'author email: ' + color.END + 'botfgbartenevfgzero76@gmail.com')
+                    while True:
+                        print(color.RED + '\nQ)--GO BACK\n' + color.END)
+                        uc_name = input(botdrPrompt)
+                        if uc_name == 'Q':
+                            main()
+                            break
                 elif uc == 'Q':
                     main()
                     break    
@@ -1159,3 +1179,7 @@ def super_main():
         createConfig(path)
     vhod()
     main()
+
+
+
+super_main()
