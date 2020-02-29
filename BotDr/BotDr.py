@@ -36,7 +36,7 @@ class color:
 botdrPrompt = (color.OKGREEN + "BotDr ~# " + color.END)
 
 
-botdrlogo = (color.OKGREEN + '''
+botdrlogo = (color.OKGREEN + r'''
     ____        __     ____      
    / __ )____  / /_   / __ \_____
   / __  / __ \/ __/  / / / / ___/
