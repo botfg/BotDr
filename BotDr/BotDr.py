@@ -18,11 +18,8 @@ import csv
 import getpass
 import os
 import sys
-import hashlib
 from datetime import date, datetime
-from hashlib import sha3_512
 import configparser
-import BotDr
 
 import numpy
 import pyAesCrypt
@@ -54,11 +51,6 @@ db_dir = ('/home/{}/.botdr/'.format(getpass.getuser()))
 papka = os.path.isdir(db_dir)
 if papka == False:
     os.mkdir(db_dir)
-
-
-def hash(string: str) -> str:
-    signature = sha3_512(string.encode()).hexdigest()
-    return signature
     
     
 def crypt_aes(file, password) -> None:
@@ -78,9 +70,7 @@ def dec(string: str) -> str:
 
 
 def createConfig(path):
-    """
-    Create a config file
-    """
+    #Create a config file
     config = configparser.ConfigParser()
     config.add_section("Settings")
     config.set("Settings", "accounts status", "off")
@@ -434,7 +424,7 @@ def main() -> None:
         if not results.size:
             main()
         elif results.size > 0:
-            cursor.close
+            cursor.close()
             while True:
                 uc = input(color.OKBLUE + 'Delete all person? [Y/n]: ' + color.END)
                 if uc == 'Y':
@@ -691,7 +681,7 @@ def main() -> None:
                 if (year - int(i[0])) < int(i[0]):
                     dr_in_this_year += 1
             print(color.OKBLUE + 'total people: ' + color.END + str(results2[0]))
-            mas_year = list(int(i[1]) - 1 for i in results)
+            mas_year = [int(i[1]) - 1 for i in results]
             avg = int(sum(mas_year)//len(mas_year))
             print(color.OKBLUE + 'average age: ' + color.END + str(avg))
             print(color.OKBLUE + 'birthdays this year: ' + color.END + str(dr_in_this_year))
@@ -713,7 +703,7 @@ def main() -> None:
             print(color.RED + '4' + color.END + ')--' + color.OKBLUE + 'Sign out\n' + color.END)
             uc = input(botdrPrompt)
             if uc == '4':  # 4-sign out
-                conn.close
+                conn.close()
                 vhod()
                 break
             elif uc == 'Q':
@@ -727,7 +717,7 @@ def main() -> None:
                         account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
                         if account_pass == 'Q':
                             main()
-                        conn.close
+                        conn.close()
                         cursor.execute("PRAGMA key={}".format(account_pass))
                         cursor.execute('SELECT COUNT(name) FROM users')
                     except:
@@ -739,8 +729,8 @@ def main() -> None:
                     if uc == 'n':
                         break
                     elif uc == 'Y':
-                        cursor.close
-                        conn.close
+                        cursor.close()
+                        conn.close()
                         os.remove(db_dir + account_name + '.db')
                         vhod()
                         main()
@@ -757,7 +747,7 @@ def main() -> None:
                         account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
                         if account_pass == 'Q':
                             main()
-                        conn.close
+                        conn.close()
                         cursor.execute("PRAGMA key={}".format(account_pass))
                         cursor.execute('SELECT COUNT(name) FROM users')
                     except:
@@ -916,7 +906,7 @@ def main() -> None:
                         print(dec(color.RED + 'Import csv' + color.END))
                         uc = input(color.OKBLUE + 'Is the file encrypted? [Y/n]: ' + color.END)
                         if uc == 'Q':
-                            main
+                            main()
                         elif uc == 'n':
                             while True:
                                 name_dir = input(color.OKBLUE + 'Enter dir: ' + color.END)
@@ -947,7 +937,7 @@ def main() -> None:
                             results = numpy.array(cursor.fetchall(), dtype=str)
                             with open(name_dir + '/' + file, "r") as f_obj:
                                 reader = csv.reader(f_obj)
-                                incorrect_import_csv = list()
+                                incorrect_import_csv = []
                                 for row in reader:
                                     if len(row) == 2:
                                         if row[0] in results:
@@ -1011,7 +1001,7 @@ def main() -> None:
                             results = numpy.array(cursor.fetchall(), dtype=str)
                             with open(name_dir + '/' + file2, "r") as f_obj:
                                 reader = csv.reader(f_obj)
-                                incorrect_import_csv = list()
+                                incorrect_import_csv = []
                                 for row in reader:
                                     if len(row) == 2:
                                         if row[0] in results:
