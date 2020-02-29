@@ -1,6 +1,5 @@
 from setuptools import setup, find_packages
 from os.path import join, dirname
-import os
 import BotDr
 from BotDr.BotDr import super_main
 
@@ -32,5 +31,4 @@ setup(
     ],
     zip_safe=False,
     include_package_data=True,
-    python_requires='>=3.6',
-)
+    python_requires='>=3.6',)
