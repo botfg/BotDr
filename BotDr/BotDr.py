@@ -1142,7 +1142,7 @@ def main() -> None:
                     clearScr()
                     print(botdrlogo)
                     print(dec(color.RED + 'Info' + color.END))
-                    print(color.OKGREEN + 'version: ' + color.END + '1.4.1.3')
+                    print(color.OKGREEN + 'version: ' + color.END + '1.4.1.4')
                     print(color.OKGREEN + 'license: ' + color.END + 'Apache License Version 2.0')
                     print(color.OKGREEN + 'author: ' + color.END + 'botfg76')
                     print(color.OKGREEN + 'author email: ' + color.END + 'botfgbartenevfgzero76@gmail.com')
