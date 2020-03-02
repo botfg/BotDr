@@ -197,11 +197,11 @@ def vhod() -> None:
             vhod()
     elif accounts_status == "off":
         clearScr()
-        print(botdrlogo)
-        print('enter Q to go to the main menu\n')
-        print(dec(color.RED + 'sign up' + color.END))
         x1 = os.path.isfile(db_dir + 'main_botdr.db')
         if x1 == False:
+            print(botdrlogo)
+            print('enter Q to go to the main menu\n')
+            print(dec(color.RED + 'sign up' + color.END))
             while True:
                 password1 = getpass.getpass(color.OKBLUE + 'enter password: ' + color.END)
                 if password1 == 'Q':
@@ -229,7 +229,7 @@ def vhod() -> None:
                     break
                 elif u_podtver == 'Y':
                     # make users db
-                    name_db = (db_dir + 'main.db')
+                    name_db = (db_dir + 'main_botdr.db')
                     conn = sqlcipher.connect(name_db)
                     cursor = conn.cursor()
                     cursor.execute("PRAGMA key={}".format(account_pass))
@@ -1084,6 +1084,8 @@ def main() -> None:
                 print(dec(color.RED + 'Search' + color.END))
                 print(color.OKBLUE + 'Name: ' + color.END + item[0] + color.OKBLUE + ' date of birth: ' + color.END + item[1].replace('-', '.'))
                 print(color.OKBLUE + 'In ' + color.END + item[2] + color.OKBLUE + ' days it will be ' + color.END + item[3] + color.OKBLUE + ' years\n' + color.END)
+        elif results[0] == 0:
+           main()         
     elif usercomand == '9': # settings
         while True:
             clearScr()
