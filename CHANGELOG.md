@@ -1,9 +1,6 @@
 # <center> CHANGELOG for BotDr </center>
 
-#### update 1.4.1.2
-* ##### critical bugfix
-
-#### update 1.4.1.1
+#### update 1.4.1.1 - 1.4.1.3
 * ##### critical bugfix
 
 #### update 1.4.1
