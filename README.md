@@ -19,6 +19,7 @@ sudo apt install sqlcipher libsqlcipher0 libsqlcipher-dev
 ```bash
 pip3 install BotDr
 ```
+### how to use: enter BotDr in the terminal
 
 ### [PyPi](https://pypi.org/project/BotDr/)
 
