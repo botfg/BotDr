@@ -424,19 +424,17 @@ def main() -> None:
         if not results.size:
             main()
         elif results.size > 0:
-            cursor.close()
             while True:
                 uc = input(color.OKBLUE + 'Delete all person? [Y/n]: ' + color.END)
                 if uc == 'Y':
                     break
                 elif uc == 'n':
                     main()
-                else:
-                    print(color.RED + 'Wrong command' + color.END)
             while True:
                 account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
+                if account_pass == "Q":
+                    main()
                 try:
-                    conn.close
                     cursor.execute("PRAGMA key={}".format(account_pass))
                     cursor.execute('SELECT COUNT(name) FROM users')
                 except:
@@ -501,9 +499,8 @@ def main() -> None:
             while True:
                 try:
                     account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
-                    if account_name == 'Q':
+                    if account_pass == 'Q':
                         main()
-                    conn.close
                     cursor.execute("PRAGMA key={}".format(account_pass))
                     cursor.execute('SELECT COUNT(name) FROM users')
                 except:
@@ -596,7 +593,7 @@ def main() -> None:
                         if account_pass == 'Q':
                             main()
                         try:
-                            conn.close
+                            conn.close()
                             cursor.execute("PRAGMA key={}".format(account_pass))
                             cursor.execute('SELECT COUNT(name) FROM users')
                         except:
@@ -628,7 +625,7 @@ def main() -> None:
                         if account_pass == 'Q':
                             main()
                         try:
-                            conn.close
+                            conn.close()
                             cursor.execute("PRAGMA key={}".format(account_pass))
                             cursor.execute('SELECT COUNT(name) FROM users')
                         except:
@@ -792,7 +789,7 @@ def main() -> None:
                         account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
                         if account_pass == 'Q':
                             main()
-                        conn.close
+                        conn.close()
                         cursor.execute("PRAGMA key={}".format(account_pass))
                         cursor.execute('SELECT COUNT(name) FROM users')
                     except:
@@ -1144,7 +1141,7 @@ def main() -> None:
                     clearScr()
                     print(botdrlogo)
                     print(dec(color.RED + 'Info' + color.END))
-                    print(color.OKGREEN + 'version: ' + color.END + '1.4.1')
+                    print(color.OKGREEN + 'version: ' + color.END + '1.4.1.3')
                     print(color.OKGREEN + 'license: ' + color.END + 'Apache License Version 2.0')
                     print(color.OKGREEN + 'author: ' + color.END + 'botfg76')
                     print(color.OKGREEN + 'author email: ' + color.END + 'botfgbartenevfgzero76@gmail.com')
