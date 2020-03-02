@@ -672,13 +672,14 @@ def main() -> None:
                     else strftime('%Y-', 'now') - strftime('%Y-', bday) + '1 year'
                 end
             ) as int) as year_after_bday from users order by tillbday""")
-            results = numpy.array(cursor.fetchall(), dtype=str)
+            results = numpy.array(cursor.fetchall(), dtype=int)
             dr_in_this_year = 0
+            days_after_ny = int((datetime(date.today().year,1,1) - datetime.today()).days)*-1
             for i in results:
-                if (year - int(i[0])) < int(i[0]):
+                if i[0] < (year - days_after_ny):
                     dr_in_this_year += 1
             print(color.OKBLUE + 'total people: ' + color.END + str(results2[0]))
-            mas_year = [int(i[1]) - 1 for i in results]
+            mas_year = [i[1] - 1 for i in results]
             avg = int(sum(mas_year)//len(mas_year))
             print(color.OKBLUE + 'average age: ' + color.END + str(avg))
             print(color.OKBLUE + 'birthdays this year: ' + color.END + str(dr_in_this_year))
@@ -1171,4 +1172,4 @@ def super_main():
 
 
 
-#super_main()
+super_main()
