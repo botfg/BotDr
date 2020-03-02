@@ -8,6 +8,7 @@ Need to install system libraries: sqlcipher libsqlcipher0 libsqlcipher-dev
 
 debian: sudo apt install sqlcipher libsqlcipher0 libsqlcipher-dev
 
+how to use: enter BotDr in the terminal
 
 BotDr - python3 console script for working with birthday dates supporting local accounts
 
