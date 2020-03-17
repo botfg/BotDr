@@ -20,9 +20,12 @@ import os
 import sys
 from datetime import date, datetime
 import configparser
+from hashlib import sha3_512
+
 
 import numpy
 import pyAesCrypt
+import pysqlcipher3
 from pysqlcipher3 import dbapi2 as sqlcipher
 
 class color:
@@ -52,6 +55,11 @@ papka = os.path.isdir(db_dir)
 if papka == False:
     os.mkdir(db_dir)
     
+
+def hash(string: str) -> str:
+    signature = sha3_512(string.encode()).hexdigest()
+    return signature
+    
     
 def crypt_aes(file, password) -> None:
     buffer_size = 512 * 2048
@@ -80,7 +88,7 @@ def createConfig(path):
 
 
 def vhod() -> None:
-    global account_name, account_pass, conn, cursor
+    global account_name, account_pass, conn, cursor, ac
     path = (db_dir + "botdr.ini")
     config = configparser.ConfigParser()
     config.read(path)
@@ -154,6 +162,7 @@ def vhod() -> None:
                         ( id integer primary key, name varchar(255) NOT NULL, bday datetime NOT NULL)
                             """)
                     conn.commit()
+                    ac = hash(account_pass)
                     break
                 else:
                     print(color.RED + 'wrong command' + color.END)
@@ -185,15 +194,18 @@ def vhod() -> None:
                 try:
                     account_pass = getpass.getpass(color.OKBLUE + 'enter password: ' + color.END)
                     if account_pass == 'Q':
-                        vhod()
+                        sys.exit()
                     cursor.execute("PRAGMA key={}".format(account_pass))
                     cursor.execute('SELECT COUNT(name) FROM users')
-                except:
+                except SystemExit:
+                    clearScr()
+                    sys.exit()
+                except pysqlcipher3.dbapi2.DatabaseError:
                     print(color.RED + 'wrong password' + color.END)
                 else:
+                    ac = hash(account_pass)
                     break
         else:
-            #print('wrong command')
             vhod()
     elif accounts_status == "off":
         clearScr()
@@ -239,7 +251,8 @@ def vhod() -> None:
                     conn.commit()
                     break
                 else:
-                    print(color.RED + 'wrong command' + color.END)        
+                    print(color.RED + 'wrong command' + color.END)
+            ac = hash(account_pass)     
         if x1 == True:
             name_db = (db_dir + 'main_botdr.db')
             conn = sqlcipher.connect(name_db)
@@ -251,18 +264,22 @@ def vhod() -> None:
                 try:
                     account_pass = getpass.getpass(color.OKBLUE + 'enter password: ' + color.END)
                     if account_pass == 'Q':
-                        vhod()
+                        sys.exit()
                     cursor.execute("PRAGMA key={}".format(account_pass))
                     cursor.execute('SELECT COUNT(name) FROM users')
-                except:
+                except SystemExit:
+                    clearScr()
+                    sys.exit()
+                except pysqlcipher3.dbapi2.DatabaseError:
                     print(color.RED + 'wrong password' + color.END)
                 else:
                     break
+            ac = hash(account_pass)
     
     
 
 def main() -> None:
-    global account_name, account_pass, cursor, conn
+    global account_name, account_pass, cursor, conn, ac
     clearScr()
     print(botdrlogo)
     print(dec(color.RED + 'options' + color.END))
@@ -406,7 +423,6 @@ def main() -> None:
     elif usercomand == '4':  # 4-delete all person
         print(botdrlogo)
         print(dec(color.RED + 'Delete all' + color.END))
-        cursor.execute("PRAGMA key={}".format(account_pass))
         cursor.execute("""select name, bday, cast ((julianday(
             case
                 when strftime('%m-%d', bday) < strftime('%m-%d', 'now')
@@ -427,24 +443,20 @@ def main() -> None:
             while True:
                 uc = input(color.OKBLUE + 'Delete all person? [Y/n]: ' + color.END)
                 if uc == 'Y':
-                    break
+                    while True:
+                        account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
+                        if account_pass == "Q":
+                            main()
+                        if hash(account_pass) != ac:
+                            print(color.RED + 'Wrong password' + color.END)
+                        elif hash(account_pass) == ac:
+                            cursor.execute('DELETE FROM users')
+                            cursor.execute('REINDEX users')
+                            conn.commit()
+                            main()
+                            break
                 elif uc == 'n':
                     main()
-            while True:
-                account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
-                if account_pass == "Q":
-                    main()
-                try:
-                    cursor.execute("PRAGMA key={}".format(account_pass))
-                    cursor.execute('SELECT COUNT(name) FROM users')
-                except:
-                    print(color.RED + 'Wrong password' + color.END)
-                else:
-                    break
-            cursor.execute('DELETE FROM users')
-            cursor.execute('REINDEX users')
-            conn.commit()
-            main()
     elif usercomand == '3':  # 3-delete person
         print(botdrlogo)
         print(dec(color.RED + 'Delete' + color.END))
@@ -497,20 +509,18 @@ def main() -> None:
             main()
         elif user_podtv == 'Y':
             while True:
-                try:
-                    account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
-                    if account_pass == 'Q':
-                        main()
-                    cursor.execute("PRAGMA key={}".format(account_pass))
-                    cursor.execute('SELECT COUNT(name) FROM users')
-                except:
+                account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
+                if account_pass == 'Q':
+                    main()
+                cursor.execute("PRAGMA key={}".format(account_pass))
+                cursor.execute('SELECT COUNT(name) FROM users')
+                if hash(account_pass) != ac:
                     print(color.RED + 'Wrong password' + color.END)
-                else:
-                    break
-        sql = ("""DELETE FROM users WHERE name = ?""")
-        cursor.execute(sql, (uc,))
-        conn.commit()
-        main()
+                elif hash(account_pass) == ac:
+                    sql = ("""DELETE FROM users WHERE name = ?""")
+                    cursor.execute(sql, (uc,))
+                    conn.commit()
+                    main()
     elif usercomand == '5':  # 5-edit
         print(botdrlogo)
         print(dec(color.RED + 'Edit' + color.END))
@@ -592,17 +602,13 @@ def main() -> None:
                         account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
                         if account_pass == 'Q':
                             main()
-                        try:
-                            conn.close()
-                            cursor.execute("PRAGMA key={}".format(account_pass))
-                            cursor.execute('SELECT COUNT(name) FROM users')
-                        except:
+                        if hash(account_pass) != ac:
                             print(color.RED + 'Wrong password' + color.END)
-                        else:
+                        elif hash(account_pass) == ac:
+                            sql = ("""UPDATE users SET name = ? WHERE name = ?""")
+                            cursor.execute(sql, (user_name, uc_name))
+                            conn.commit()
                             break
-                    sql = ("""UPDATE users SET name = ? WHERE name = ?""")
-                    cursor.execute(sql, (user_name, uc_name))
-                    conn.commit()
                     break
                 elif uc == '2':
                     clearScr()
@@ -624,13 +630,9 @@ def main() -> None:
                         account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
                         if account_pass == 'Q':
                             main()
-                        try:
-                            conn.close()
-                            cursor.execute("PRAGMA key={}".format(account_pass))
-                            cursor.execute('SELECT COUNT(name) FROM users')
-                        except:
+                        if hash(account_pass) != ac:
                             print(color.RED + 'wrong password' + color.END)
-                        else:
+                        elif hash(account_pass) == ac:
                             break
                     sql = ("""UPDATE users SET bday = ? WHERE name = ?""")
                     cursor.execute(
@@ -711,16 +713,12 @@ def main() -> None:
                 print(botdrlogo)
                 print(dec(color.RED + 'Delete account' + color.END))
                 while True:
-                    try:
-                        account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
-                        if account_pass == 'Q':
-                            main()
-                        conn.close()
-                        cursor.execute("PRAGMA key={}".format(account_pass))
-                        cursor.execute('SELECT COUNT(name) FROM users')
-                    except:
+                    account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
+                    if account_pass == 'Q':
+                        main()
+                    if hash(account_pass) != ac:
                         print(color.RED + 'Wrong password' + color.END)
-                    else:
+                    elif hash(account_pass) == ac:
                         break
                 while True:
                     uc = input(color.OKBLUE + 'Delete this account? [Y/n]: ' + color.END)
@@ -741,16 +739,12 @@ def main() -> None:
                 print(botdrlogo)
                 print(dec(color.RED + 'Change Password' + color.END))
                 while True:
-                    try:
-                        account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
-                        if account_pass == 'Q':
-                            main()
-                        conn.close()
-                        cursor.execute("PRAGMA key={}".format(account_pass))
-                        cursor.execute('SELECT COUNT(name) FROM users')
-                    except:
+                    account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
+                    if account_pass == 'Q':
+                        main()
+                    if hash(account_pass) !=ac:
                         print(color.RED + 'Wrong password' + color.END)
-                    else:
+                    elif hash(account_pass) == ac:
                         break
                 while True:
                     new_account_pass_1 = getpass.getpass(color.OKBLUE + 'Enter new password: ' + color.END)
@@ -786,16 +780,12 @@ def main() -> None:
                 print(botdrlogo)
                 print(dec(color.RED + 'Export and import csv' + color.END))
                 while True:
-                    try:
-                        account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
-                        if account_pass == 'Q':
-                            main()
-                        conn.close()
-                        cursor.execute("PRAGMA key={}".format(account_pass))
-                        cursor.execute('SELECT COUNT(name) FROM users')
-                    except:
+                    account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
+                    if account_pass == 'Q':
+                        main()
+                    if hash(account_pass) != ac:
                         print(color.RED + 'Wrong password' + color.END)
-                    else:
+                    elif hash(account_pass) == ac:
                         break
                 clearScr()
                 print(botdrlogo)
@@ -1035,7 +1025,7 @@ def main() -> None:
         print(dec(color.RED + 'Search' + color.END))
         cursor.execute('select count(name) from users')
         results = cursor.fetchone()
-        uc_name = ''
+        print(results)
         if results[0] > 0:
             while True:
                 uc_name = input(color.OKBLUE + 'Enter name: ' + color.END)
@@ -1142,7 +1132,7 @@ def main() -> None:
                     clearScr()
                     print(botdrlogo)
                     print(dec(color.RED + 'Info' + color.END))
-                    print(color.OKGREEN + 'version: ' + color.END + '1.4.1.4')
+                    print(color.OKGREEN + 'version: ' + color.END + '1.4.2')
                     print(color.OKGREEN + 'license: ' + color.END + 'Apache License Version 2.0')
                     print(color.OKGREEN + 'author: ' + color.END + 'botfg76')
                     print(color.OKGREEN + 'author email: ' + color.END + 'botfgbartenevfgzero76@gmail.com')
