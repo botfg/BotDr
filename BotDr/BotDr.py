@@ -661,7 +661,7 @@ def main() -> None:
                     year = 366
             else:
                 year = 365
-            cursor.execute("""select cast ((julianday(
+            cursor.execute("""select name, bday, cast ((julianday(
                 case
                     when strftime('%m-%d', bday) < strftime('%m-%d', 'now')
                     then strftime('%Y-', 'now', '+1 year')
@@ -674,17 +674,37 @@ def main() -> None:
                     else strftime('%Y-', 'now') - strftime('%Y-', bday) + '1 year'
                 end
             ) as int) as year_after_bday from users order by tillbday""")
-            results = numpy.array(cursor.fetchall(), dtype=int)
-            dr_in_this_year = 0
+            results = numpy.array(cursor.fetchall(), dtype=str)
             days_after_ny = int((datetime(date.today().year,1,1) - datetime.today()).days)*-1
+            dr_in_this_year = 0
             for i in results:
-                if i[0] < (year - days_after_ny):
+                if int(i[2]) < (year - days_after_ny):
                     dr_in_this_year += 1
             print(color.OKBLUE + 'total people: ' + color.END + str(results2[0]))
-            mas_year = [i[1] - 1 for i in results]
+            mas_year = [int(i[3]) - 1 for i in results]
             avg = int(sum(mas_year)//len(mas_year))
+            
+            
+            old = str(min([i[1] for i in results]))
+            young = str(max([i[1] for i in results]))
+            itemindex_young = numpy.where(results==young)
+            itemindex_old = numpy.where(results==old)
             print(color.OKBLUE + 'average age: ' + color.END + str(avg))
-            print(color.OKBLUE + 'birthdays this year: ' + color.END + str(dr_in_this_year))
+            print(color.OKBLUE + 'birthdays in this year: ' + color.END + str(dr_in_this_year))
+            text = ""
+            if len(itemindex_young[0]) > 1:
+                for i in range(0,len(itemindex_young)):
+                    text += str(results[itemindex_young[0][i]][0] + ', ')
+                print(color.OKBLUE + 'the youngest: ' + color.END + text[:-1] + str(' ') + str(young))
+            elif len(itemindex_young[0]) == 1:
+                print(color.OKBLUE + 'the youngest: ' + color.END + results[itemindex_young[0][0]][0] + str(' ') + str(young))
+            text = ""
+            if len(itemindex_old[0]) > 1:
+                for i in range(0,len(itemindex_old)):
+                    text += str(results[itemindex_old[0][i]][0] + ', ')
+                print(color.OKBLUE + 'the oldest: ' + color.END + text[:-1] + str(' ') + str(old))
+            elif len(itemindex_old[0]) == 1:
+                print(color.OKBLUE + 'the oldest: ' + color.END + results[itemindex_old[0][0]][0] + str(' ') + str(old))
             while True:
                 print(color.RED + '\nQ)--GO BACK\n' + color.END)
                 uc = input(botdrPrompt)
@@ -1019,7 +1039,7 @@ def main() -> None:
             else:
                 print(color.RED + 'Wrong command' + color.END)
         main()
-    elif usercomand == '8':
+    elif usercomand == '8':  # 8-SEARCH
         clearScr()
         print(botdrlogo)
         print(dec(color.RED + 'Search' + color.END))
