@@ -683,8 +683,6 @@ def main() -> None:
             print(color.OKBLUE + 'total people: ' + color.END + str(results2[0]))
             mas_year = [int(i[3]) - 1 for i in results]
             avg = int(sum(mas_year)//len(mas_year))
-            
-            
             old = str(min([i[1] for i in results]))
             young = str(max([i[1] for i in results]))
             itemindex_young = numpy.where(results==young)
@@ -1045,7 +1043,6 @@ def main() -> None:
         print(dec(color.RED + 'Search' + color.END))
         cursor.execute('select count(name) from users')
         results = cursor.fetchone()
-        print(results)
         if results[0] > 0:
             while True:
                 uc_name = input(color.OKBLUE + 'Enter name: ' + color.END)
@@ -1056,9 +1053,6 @@ def main() -> None:
                 results = cursor.fetchone()
                 if results[0] == 0:
                     print(color.RED + 'Name not found' + color.END)
-                    clearScr()
-                    print(botdrlogo)
-                    print(dec(color.RED + 'Search' + color.END))
                 elif results[0] == 1:
                     break
             sql = ("""select name, bday, cast ((julianday(
