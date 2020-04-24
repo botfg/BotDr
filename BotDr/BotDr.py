@@ -49,11 +49,15 @@ botdrlogo = (color.OKGREEN + r'''
 
 
 db_dir = ('/home/{}/.botdr/'.format(getpass.getuser()))
-
+log_file = (db_dir + 'botdr.log')
 
 papka = os.path.isdir(db_dir)
 if papka == False:
     os.mkdir(db_dir)
+
+x2 = os.path.isfile(log_file)
+if x2 == False:
+    log = open(log_file, 'w')
     
 
 def hash(string: str) -> str:
@@ -82,6 +86,7 @@ def createConfig(path):
     config = configparser.ConfigParser()
     config.add_section("Settings")
     config.set("Settings", "accounts status", "off")
+    config.set("Settings", "log status", "off")
     with open(path, "w") as config_file:
         config.write(config_file)
     config_file.close()
@@ -93,6 +98,10 @@ def vhod() -> None:
     config = configparser.ConfigParser()
     config.read(path)
     accounts_status = config.get("Settings", "accounts status")
+    log_status = config.get("Settings", "log status")
+    if log_status == 'on':
+        log.write('INFO: Run app: ' + str(datetime.now()) + '\n')
+        log.close()
     if accounts_status == "on":
         clearScr()
         print(botdrlogo)
@@ -295,6 +304,9 @@ def main() -> None:
     birth_in_mounth = 0
     now = datetime.now()
     mounth = calendar.monthrange(now.year, now.month)[1]
+    path = (db_dir + "botdr.ini")
+    config = configparser.ConfigParser()
+    config.read(path)
     for i in results:
         if i[0] <= mounth:
             birth_in_mounth += 1            
@@ -382,6 +394,11 @@ def main() -> None:
             if uc == 'Y':
                 cursor.execute("insert into users(name, bday) values (?, ?)", (user_name, date_birthday))
                 conn.commit()
+                log_status = config.get("Settings", "log status")
+                if log_status == 'on':
+                    log = open(log_file, 'a')
+                    log.write('INFO: Add person: ' + str(datetime.now()) + '\n')
+                    log.close()
                 break
             elif uc == 'n':
                 main()
@@ -453,6 +470,11 @@ def main() -> None:
                             cursor.execute('DELETE FROM users')
                             cursor.execute('REINDEX users')
                             conn.commit()
+                            log_status = config.get("Settings", "log status")
+                            if log_status == 'on':
+                                log = open(log_file, 'a')
+                                log.write('INFO: Delete all person: ' + str(datetime.now()) + '\n')
+                                log.close()
                             main()
                             break
                 elif uc == 'n':
@@ -520,6 +542,11 @@ def main() -> None:
                     sql = ("""DELETE FROM users WHERE name = ?""")
                     cursor.execute(sql, (uc,))
                     conn.commit()
+                    log_status = config.get("Settings", "log status")
+                    if log_status == 'on':
+                        log = open(log_file, 'a')
+                        log.write('INFO: Delete person: ' + str(datetime.now()) + '\n')
+                        log.close()
                     main()
     elif usercomand == '5':  # 5-edit
         print(botdrlogo)
@@ -608,6 +635,11 @@ def main() -> None:
                             sql = ("""UPDATE users SET name = ? WHERE name = ?""")
                             cursor.execute(sql, (user_name, uc_name))
                             conn.commit()
+                            log_status = config.get("Settings", "log status")
+                            if log_status == 'on':
+                                log = open(log_file, 'a')
+                                log.write('INFO: Rename person: ' + str(datetime.now()) + '\n')
+                                log.close()
                             break
                     break
                 elif uc == '2':
@@ -635,9 +667,13 @@ def main() -> None:
                         elif hash(account_pass) == ac:
                             break
                     sql = ("""UPDATE users SET bday = ? WHERE name = ?""")
-                    cursor.execute(
-                        sql, (date_birthday, uc_name))
+                    cursor.execute(sql, (date_birthday, uc_name))
                     conn.commit()
+                    log_status = config.get("Settings", "log status")
+                    if log_status == 'on':
+                        log = open(log_file, 'a')
+                        log.write('INFO: Edit person birthday: ' + str(datetime.now()) + '\n')
+                        log.close()
                     break
                 elif uc == 'Q':
                     break
@@ -722,6 +758,11 @@ def main() -> None:
             uc = input(botdrPrompt)
             if uc == '4':  # 4-sign out
                 conn.close()
+                log_status = config.get("Settings", "log status")
+                if log_status == 'on':
+                    log = open(log_file, 'a')
+                    log.write('INFO: Sign out: ' + str(datetime.now()) + '\n')
+                    log.close()
                 vhod()
                 break
             elif uc == 'Q':
@@ -746,6 +787,11 @@ def main() -> None:
                         cursor.close()
                         conn.close()
                         os.remove(db_dir + account_name + '.db')
+                        log_status = config.get("Settings", "log status")
+                        if log_status == 'on':
+                            log = open(log_file, 'a')
+                            log.write('INFO: Delete account: ' + str(datetime.now()) + '\n')
+                            log.close()
                         vhod()
                         main()
                     elif uc == 'Q':
@@ -792,6 +838,11 @@ def main() -> None:
                             main()
                         new_account_pass_2 = getpass.getpass(color.OKBLUE + 'Repeat new password: ' + color.END)
                 cursor.execute('PRAGMA rekey={}'.format(account_pass))
+                log_status = config.get("Settings", "log status")
+                if log_status == 'on':
+                    log = open(log_file, 'a')
+                    log.write('INFO: Change password: ' + str(datetime.now()) + '\n')
+                    log.close()
                 break
             elif uc == '3':  # export and import csv
                 clearScr()
@@ -854,6 +905,11 @@ def main() -> None:
                                     for line in results:
                                         writer.writerow(line)
                                 csv_file.close()
+                                log_status = config.get("Settings", "log status")
+                                if log_status == 'on':
+                                    log = open(log_file, 'a')
+                                    log.write('INFO: Not encrypted export: ' + str(datetime.now()) + '\n')
+                                    log.close()
                                 main()
                             elif uc == 'Y':
                                 while True:
@@ -903,6 +959,11 @@ def main() -> None:
                                 buffer_size1 = 512 * 2048
                                 pyAesCrypt.encryptFile(file, str(file + '.aes'), password, buffer_size1)
                                 os.remove(file)
+                                log_status = config.get("Settings", "log status")
+                                if log_status == 'on':
+                                    log = open(log_file, 'a')
+                                    log.write('INFO: Encrypted export: ' + str(datetime.now()) + '\n')
+                                    log.close()
                                 main()
                             else:
                                 print(color.RED + 'Wrong command' + color.END)
@@ -965,6 +1026,11 @@ def main() -> None:
                                         writer.writerow(line)
                                 csv_file.close()
                             f_obj.close()
+                            log_status = config.get("Settings", "log status")
+                            if log_status == 'on':
+                                log = open(log_file, 'a')
+                                log.write('INFO: Not encrypted import: ' + str(datetime.now()) + '\n')
+                                log.close()
                             main()
                         elif uc == 'Y':
                             while True:
@@ -1029,6 +1095,11 @@ def main() -> None:
                                         writer.writerow(line)
                                 csv_file.close()
                             f_obj.close()
+                            log_status = config.get("Settings", "log status")
+                            if log_status == 'on':
+                                log = open(log_file, 'a')
+                                log.write('INFO: Encrypted import: ' + str(datetime.now()) + '\n')
+                                log.close()
                             main()
                         else:
                             print(color.RED + 'Wrong command' + color.END)
@@ -1036,6 +1107,7 @@ def main() -> None:
                         print(color.RED + 'Wrong command' + color.END)
             else:
                 print(color.RED + 'Wrong command' + color.END)
+            
         main()
     elif usercomand == '8':  # 8-SEARCH
         clearScr()
@@ -1094,13 +1166,13 @@ def main() -> None:
             print(botdrlogo)
             print(dec(color.RED + 'Settings' + color.END))
             path = (db_dir + "botdr.ini")
-            if not os.path.exists(path):
-                createConfig(path)
             config = configparser.ConfigParser()
             config.read(path)
             accounts_status = config.get("Settings", "accounts status")
+            log_status = config.get("Settings", "log status")
             print(color.RED + '1' + color.END + ')--' + color.OKBLUE + 'on/off accounts status: ' + color.END + color.OKGREEN + accounts_status + color.END)
-            print(color.RED + '2' + color.END + ')--' + color.OKBLUE + 'info' + color.END)
+            print(color.RED + '2' + color.END + ')--' + color.OKBLUE + 'on/off logging: ' + color.END + color.OKGREEN + log_status + color.END)
+            print(color.RED + '3' + color.END + ')--' + color.OKBLUE + 'info' + color.END)
             while True:
                 print(color.RED + '\nQ)--GO BACK\n' + color.END)
                 uc = input(botdrPrompt)
@@ -1143,6 +1215,15 @@ def main() -> None:
                     config_file.close()
                     main()
                 elif uc == '2':
+                    if log_status == 'off':
+                        config.set("Settings", "log status", "on")
+                    elif log_status == 'on':
+                        config.set("Settings", "log status", "off")
+                    with open(path, "w") as config_file:
+                        config.write(config_file)
+                    config_file.close()
+                    break
+                elif uc == '3':
                     clearScr()
                     print(botdrlogo)
                     print(dec(color.RED + 'Info' + color.END))
@@ -1154,13 +1235,21 @@ def main() -> None:
                         print(color.RED + '\nQ)--GO BACK\n' + color.END)
                         uc_name = input(botdrPrompt)
                         if uc_name == 'Q':
-                            main()
                             break
                 elif uc == 'Q':
                     main()
                     break    
+                break
     elif usercomand == 'Q':  # Q-exit
         cursor.close()
+        path = (db_dir + "botdr.ini")
+        config = configparser.ConfigParser()
+        config.read(path)
+        log_status = config.get("Settings", "log status")
+        if log_status == 'on':
+            log = open(log_file, 'a')
+            log.write('INFO: Exit: ' + str(datetime.now()) + '\n')
+        log.close()
         clearScr()
         sys.exit()
     else:
@@ -1172,8 +1261,16 @@ def super_main():
     if not os.path.exists(path):
         createConfig(path)
     vhod()
+    path = (db_dir + "botdr.ini")
+    config = configparser.ConfigParser()
+    config.read(path)
+    log_status = config.get("Settings", "log status")
+    if log_status == 'on':
+        log = open(log_file, 'a')
+        log.write('INFO: Entrance: ' + str(datetime.now()) + '\n')
+        log.close()
     main()
 
 
-
-#super_main()
+if __name__ == '__main__':
+    super_main()
