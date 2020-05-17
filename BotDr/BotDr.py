@@ -26,6 +26,7 @@ from hashlib import sha3_512
 import numpy
 import pyAesCrypt
 import pysqlcipher3
+from argon2 import PasswordHasher, exceptions
 from pysqlcipher3 import dbapi2 as sqlcipher
 
 class color:
@@ -35,6 +36,8 @@ class color:
     RED = ('\033[91m')
     END = ('\033[0m')
 
+
+ph = PasswordHasher()
 
 botdrPrompt = (color.OKGREEN + "BotDr ~# " + color.END)
 
@@ -49,16 +52,18 @@ botdrlogo = (color.OKGREEN + r'''
 
 
 db_dir = ('/home/{}/.botdr/'.format(getpass.getuser()))
-log_file = (db_dir + 'botdr.log')
+
 
 papka = os.path.isdir(db_dir)
-if papka == False:
+if not papka:
     os.mkdir(db_dir)
-
-x2 = os.path.isfile(log_file)
-if x2 == False:
-    log = open(log_file, 'w')
     
+
+def logging():
+    cursor.execute("select log from settings")
+    result = cursor.fetchone()
+    return result[0]
+
 
 def hash(string: str) -> str:
     signature = sha3_512(string.encode()).hexdigest()
@@ -86,22 +91,17 @@ def createConfig(path):
     config = configparser.ConfigParser()
     config.add_section("Settings")
     config.set("Settings", "accounts status", "off")
-    config.set("Settings", "log status", "off")
     with open(path, "w") as config_file:
         config.write(config_file)
     config_file.close()
 
 
 def vhod() -> None:
-    global account_name, account_pass, conn, cursor, ac
+    global account_name, conn, cursor, log_file ,ac
     path = (db_dir + "botdr.ini")
     config = configparser.ConfigParser()
     config.read(path)
     accounts_status = config.get("Settings", "accounts status")
-    log_status = config.get("Settings", "log status")
-    if log_status == 'on':
-        log.write('INFO: Run app: ' + str(datetime.now()) + '\n')
-        log.close()
     if accounts_status == "on":
         clearScr()
         print(botdrlogo)
@@ -148,7 +148,7 @@ def vhod() -> None:
                 vhod()
             while True:
                 if password1 == password2:
-                    account_pass = password1
+                    ac = ph.hash(password1)
                     break
                 elif password1 != password2:
                     print(color.RED + 'different passwords' + color.END)
@@ -166,15 +166,22 @@ def vhod() -> None:
                     name_db = (db_dir + account_name + '.db')
                     conn = sqlcipher.connect(name_db)
                     cursor = conn.cursor()
-                    cursor.execute("PRAGMA key={}".format(account_pass))
-                    cursor.execute("""CREATE TABLE users
-                        ( id integer primary key, name varchar(255) NOT NULL, bday datetime NOT NULL)
+                    cursor.execute("PRAGMA key={}".format(password1))
+                    cursor.execute("""CREATE TABLE 
+                        users
+                            ( id integer primary key, name varchar(255) NOT NULL, bday datetime NOT NULL)
                             """)
                     conn.commit()
-                    ac = hash(account_pass)
+                    cursor.execute("""CREATE TABLE 
+                        settings
+                            ( log TEXT)
+                            """)
+                    cursor.execute("""insert into settings(log) values ('off') """)
+                    conn.commit()
                     break
                 else:
                     print(color.RED + 'wrong command' + color.END)
+            vhod()
         elif u_a == '2':
             clearScr()
             print(botdrlogo)
@@ -212,7 +219,11 @@ def vhod() -> None:
                 except pysqlcipher3.dbapi2.DatabaseError:
                     print(color.RED + 'wrong password' + color.END)
                 else:
-                    ac = hash(account_pass)
+                    log_file = (db_dir + account_name + '.log')
+                    x2 = os.path.isfile(log_file)
+                    if not x2:
+                        log = open(log_file, 'w')
+                    ac = ph.hash(account_pass)
                     break
         else:
             vhod()
@@ -254,14 +265,23 @@ def vhod() -> None:
                     conn = sqlcipher.connect(name_db)
                     cursor = conn.cursor()
                     cursor.execute("PRAGMA key={}".format(account_pass))
-                    cursor.execute("""CREATE TABLE users
-                        ( id integer primary key, name varchar(255) NOT NULL, bday datetime NOT NULL)
+                    cursor.execute("""CREATE TABLE 
+                        users
+                            ( id integer primary key, name varchar(255) NOT NULL, bday datetime NOT NULL)
                             """)
+                    conn.commit()
+                    cursor.execute("""CREATE TABLE 
+                        settings
+                            ( log TEXT)
+                            """)
+                    cursor.execute("""insert into settings(log) values ('off') """)
                     conn.commit()
                     break
                 else:
                     print(color.RED + 'wrong command' + color.END)
-            ac = hash(account_pass)     
+            account_name = ('main_botdr')
+            ac = ph.hash(account_pass)
+            vhod()     
         if x1 == True:
             name_db = (db_dir + 'main_botdr.db')
             conn = sqlcipher.connect(name_db)
@@ -282,13 +302,17 @@ def vhod() -> None:
                 except pysqlcipher3.dbapi2.DatabaseError:
                     print(color.RED + 'wrong password' + color.END)
                 else:
-                    break
-            ac = hash(account_pass)
-    
+                    log_file = (db_dir + 'main_botdr.log')
+                    x2 = os.path.isfile(log_file)
+                    if not x2:
+                        log = open(log_file, 'w')
+                    account_name = ('main_botdr')
+                    ac = ph.hash(account_pass)
+                    break    
     
 
 def main() -> None:
-    global account_name, account_pass, cursor, conn, ac
+    global account_name, cursor, conn, log_file ,ac
     clearScr()
     print(botdrlogo)
     print(dec(color.RED + 'options' + color.END))
@@ -359,7 +383,6 @@ def main() -> None:
             if user_name == 'Q':
                 main()
             # проверка на повторение
-            cursor.execute("PRAGMA key={}".format(account_pass))
             sql = ('SELECT COUNT(name) FROM users WHERE name = ?')
             cursor.execute(sql, (user_name,))
             results = cursor.fetchone()
@@ -394,7 +417,7 @@ def main() -> None:
             if uc == 'Y':
                 cursor.execute("insert into users(name, bday) values (?, ?)", (user_name, date_birthday))
                 conn.commit()
-                log_status = config.get("Settings", "log status")
+                log_status = logging()
                 if log_status == 'on':
                     log = open(log_file, 'a')
                     log.write('INFO: Add person: ' + str(datetime.now()) + '\n')
@@ -408,7 +431,6 @@ def main() -> None:
         main()
     elif usercomand == '2':  # 2-view
         print(botdrlogo)
-        cursor.execute("PRAGMA key={}".format(account_pass))
         cursor.execute('SELECT name FROM users')
         results = numpy.array(cursor.fetchall(), dtype=str)
         if not results.size:
@@ -461,20 +483,23 @@ def main() -> None:
                 uc = input(color.OKBLUE + 'Delete all person? [Y/n]: ' + color.END)
                 if uc == 'Y':
                     while True:
-                        account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
-                        if account_pass == "Q":
-                            main()
-                        if hash(account_pass) != ac:
+                        try:
+                            account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
+                            if account_pass == "Q":
+                                main()
+                            ph.verify(ac, account_pass)
+                        except exceptions.VerifyMismatchError:
                             print(color.RED + 'Wrong password' + color.END)
-                        elif hash(account_pass) == ac:
+                        else:
                             cursor.execute('DELETE FROM users')
                             cursor.execute('REINDEX users')
                             conn.commit()
-                            log_status = config.get("Settings", "log status")
+                            log_status = logging()
                             if log_status == 'on':
                                 log = open(log_file, 'a')
                                 log.write('INFO: Delete all person: ' + str(datetime.now()) + '\n')
                                 log.close()
+                            account_pass = ''
                             main()
                             break
                 elif uc == 'n':
@@ -531,22 +556,23 @@ def main() -> None:
             main()
         elif user_podtv == 'Y':
             while True:
-                account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
-                if account_pass == 'Q':
-                    main()
-                cursor.execute("PRAGMA key={}".format(account_pass))
-                cursor.execute('SELECT COUNT(name) FROM users')
-                if hash(account_pass) != ac:
+                try:
+                    account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
+                    if account_pass == 'Q':
+                        main()
+                    ph.verify(ac, account_pass)
+                except exceptions.VerifyMismatchError:
                     print(color.RED + 'Wrong password' + color.END)
-                elif hash(account_pass) == ac:
+                else:
                     sql = ("""DELETE FROM users WHERE name = ?""")
                     cursor.execute(sql, (uc,))
                     conn.commit()
-                    log_status = config.get("Settings", "log status")
+                    log_status = logging()
                     if log_status == 'on':
                         log = open(log_file, 'a')
                         log.write('INFO: Delete person: ' + str(datetime.now()) + '\n')
                         log.close()
+                    account_pass = ''
                     main()
     elif usercomand == '5':  # 5-edit
         print(botdrlogo)
@@ -616,7 +642,6 @@ def main() -> None:
                         if user_name == 'Q':
                             main()
                         # проверка на повторение
-                        cursor.execute("PRAGMA key={}".format(account_pass))
                         sql = ('SELECT COUNT(name) FROM users WHERE name = ?')
                         cursor.execute(sql, (user_name,))
                         results = cursor.fetchone()
@@ -626,20 +651,23 @@ def main() -> None:
                         elif lol > 0:
                             print(color.RED + 'Name already exists' + color.END)
                     while True:
-                        account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
-                        if account_pass == 'Q':
-                            main()
-                        if hash(account_pass) != ac:
+                        try:
+                            account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
+                            if account_pass == 'Q':
+                                main()
+                            ph.verify(ac, account_pass)
+                        except exceptions.VerifyMismatchError:
                             print(color.RED + 'Wrong password' + color.END)
-                        elif hash(account_pass) == ac:
+                        else:
                             sql = ("""UPDATE users SET name = ? WHERE name = ?""")
                             cursor.execute(sql, (user_name, uc_name))
                             conn.commit()
-                            log_status = config.get("Settings", "log status")
+                            log_status = logging()
                             if log_status == 'on':
                                 log = open(log_file, 'a')
                                 log.write('INFO: Rename person: ' + str(datetime.now()) + '\n')
                                 log.close()
+                            account_pass = ''
                             break
                     break
                 elif uc == '2':
@@ -659,32 +687,30 @@ def main() -> None:
                         else:
                             break
                     while True:
-                        account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
-                        if account_pass == 'Q':
-                            main()
-                        if hash(account_pass) != ac:
+                        try:
+                            account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
+                            if account_pass == 'Q':
+                                main()
+                            ph.verify(ac, account_pass)
+                        except exceptions.VerifyMismatchError:
                             print(color.RED + 'wrong password' + color.END)
-                        elif hash(account_pass) == ac:
+                        else:
+                            sql = ("""UPDATE users SET bday = ? WHERE name = ?""")
+                            cursor.execute(sql, (date_birthday, uc_name))
+                            conn.commit()
+                            log_status = logging()
+                            if log_status == 'on':
+                                log = open(log_file, 'a')
+                                log.write('INFO: Edit person birthday: ' + str(datetime.now()) + '\n')
+                                log.close()
                             break
-                    sql = ("""UPDATE users SET bday = ? WHERE name = ?""")
-                    cursor.execute(sql, (date_birthday, uc_name))
-                    conn.commit()
-                    log_status = config.get("Settings", "log status")
-                    if log_status == 'on':
-                        log = open(log_file, 'a')
-                        log.write('INFO: Edit person birthday: ' + str(datetime.now()) + '\n')
-                        log.close()
                     break
                 elif uc == 'Q':
                     break
-                else:
-                    #print('Wrong command')
-                    pass
         main()
     elif usercomand == '6':  # 6-statistics
         print(botdrlogo)
         print(dec(color.RED + 'Statistics' + color.END))
-        cursor.execute("PRAGMA key={}".format(account_pass))
         cursor.execute('select count(name) from users')
         results2 = cursor.fetchone()
         if results2[0] > 0:
@@ -758,7 +784,7 @@ def main() -> None:
             uc = input(botdrPrompt)
             if uc == '4':  # 4-sign out
                 conn.close()
-                log_status = config.get("Settings", "log status")
+                log_status = logging()
                 if log_status == 'on':
                     log = open(log_file, 'a')
                     log.write('INFO: Sign out: ' + str(datetime.now()) + '\n')
@@ -772,12 +798,15 @@ def main() -> None:
                 print(botdrlogo)
                 print(dec(color.RED + 'Delete account' + color.END))
                 while True:
-                    account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
-                    if account_pass == 'Q':
-                        main()
-                    if hash(account_pass) != ac:
+                    try:
+                        account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
+                        if account_pass == 'Q':
+                            main()
+                        ph.verify(ac, account_pass)
+                    except exceptions.VerifyMismatchError:
                         print(color.RED + 'Wrong password' + color.END)
-                    elif hash(account_pass) == ac:
+                    else:
+                        account_pass = ''
                         break
                 while True:
                     uc = input(color.OKBLUE + 'Delete this account? [Y/n]: ' + color.END)
@@ -787,7 +816,7 @@ def main() -> None:
                         cursor.close()
                         conn.close()
                         os.remove(db_dir + account_name + '.db')
-                        log_status = config.get("Settings", "log status")
+                        log_status = logging()
                         if log_status == 'on':
                             log = open(log_file, 'a')
                             log.write('INFO: Delete account: ' + str(datetime.now()) + '\n')
@@ -803,12 +832,14 @@ def main() -> None:
                 print(botdrlogo)
                 print(dec(color.RED + 'Change Password' + color.END))
                 while True:
-                    account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
-                    if account_pass == 'Q':
-                        main()
-                    if hash(account_pass) !=ac:
+                    try:
+                        account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
+                        if account_pass == 'Q':
+                            main()
+                        ph.verify(ac, account_pass)
+                    except exceptions.VerifyMismatchError:
                         print(color.RED + 'Wrong password' + color.END)
-                    elif hash(account_pass) == ac:
+                    else:
                         break
                 while True:
                     new_account_pass_1 = getpass.getpass(color.OKBLUE + 'Enter new password: ' + color.END)
@@ -838,7 +869,9 @@ def main() -> None:
                             main()
                         new_account_pass_2 = getpass.getpass(color.OKBLUE + 'Repeat new password: ' + color.END)
                 cursor.execute('PRAGMA rekey={}'.format(account_pass))
-                log_status = config.get("Settings", "log status")
+                ac = ph.hash(account_pass)
+                account_pass = ''
+                log_status = logging()
                 if log_status == 'on':
                     log = open(log_file, 'a')
                     log.write('INFO: Change password: ' + str(datetime.now()) + '\n')
@@ -849,12 +882,15 @@ def main() -> None:
                 print(botdrlogo)
                 print(dec(color.RED + 'Export and import csv' + color.END))
                 while True:
-                    account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
-                    if account_pass == 'Q':
-                        main()
-                    if hash(account_pass) != ac:
+                    try:
+                        account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
+                        if account_pass == 'Q':
+                            main()
+                        ph.verify(ac, account_pass)
+                    except exceptions.VerifyMismatchError:
                         print(color.RED + 'Wrong password' + color.END)
-                    elif hash(account_pass) == ac:
+                    else:
+                        account_pass = ''
                         break
                 clearScr()
                 print(botdrlogo)
@@ -905,7 +941,7 @@ def main() -> None:
                                     for line in results:
                                         writer.writerow(line)
                                 csv_file.close()
-                                log_status = config.get("Settings", "log status")
+                                log_status = logging()
                                 if log_status == 'on':
                                     log = open(log_file, 'a')
                                     log.write('INFO: Not encrypted export: ' + str(datetime.now()) + '\n')
@@ -959,7 +995,7 @@ def main() -> None:
                                 buffer_size1 = 512 * 2048
                                 pyAesCrypt.encryptFile(file, str(file + '.aes'), password, buffer_size1)
                                 os.remove(file)
-                                log_status = config.get("Settings", "log status")
+                                log_status = logging()
                                 if log_status == 'on':
                                     log = open(log_file, 'a')
                                     log.write('INFO: Encrypted export: ' + str(datetime.now()) + '\n')
@@ -1026,7 +1062,7 @@ def main() -> None:
                                         writer.writerow(line)
                                 csv_file.close()
                             f_obj.close()
-                            log_status = config.get("Settings", "log status")
+                            log_status = logging()
                             if log_status == 'on':
                                 log = open(log_file, 'a')
                                 log.write('INFO: Not encrypted import: ' + str(datetime.now()) + '\n')
@@ -1095,7 +1131,7 @@ def main() -> None:
                                         writer.writerow(line)
                                 csv_file.close()
                             f_obj.close()
-                            log_status = config.get("Settings", "log status")
+                            log_status = logging()
                             if log_status == 'on':
                                 log = open(log_file, 'a')
                                 log.write('INFO: Encrypted import: ' + str(datetime.now()) + '\n')
@@ -1107,7 +1143,6 @@ def main() -> None:
                         print(color.RED + 'Wrong command' + color.END)
             else:
                 print(color.RED + 'Wrong command' + color.END)
-            
         main()
     elif usercomand == '8':  # 8-SEARCH
         clearScr()
@@ -1169,7 +1204,7 @@ def main() -> None:
             config = configparser.ConfigParser()
             config.read(path)
             accounts_status = config.get("Settings", "accounts status")
-            log_status = config.get("Settings", "log status")
+            log_status = logging()
             print(color.RED + '1' + color.END + ')--' + color.OKBLUE + 'on/off accounts status: ' + color.END + color.OKGREEN + accounts_status + color.END)
             print(color.RED + '2' + color.END + ')--' + color.OKBLUE + 'on/off logging: ' + color.END + color.OKGREEN + log_status + color.END)
             print(color.RED + '3' + color.END + ')--' + color.OKBLUE + 'info' + color.END)
@@ -1183,6 +1218,17 @@ def main() -> None:
                         print(botdrlogo)
                         print(dec(color.RED + 'Accounts status' + color.END))
                         while True:
+                            try:
+                                account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
+                                if account_pass == "Q":
+                                    main()                            
+                                ph.verify(ac, account_pass)
+                            except exceptions.VerifyMismatchError:
+                                print(color.RED + 'Wrong password' + color.END)
+                            else:
+                                account_pass = ''
+                                break
+                        while True:
                             new_account_name = input(color.OKBLUE + 'enter a new login for the main account: ' + color.END)
                             x1 = os.path.isfile(new_account_name)
                             if new_account_name == "Q":
@@ -1193,41 +1239,100 @@ def main() -> None:
                                 print(color.RED + 'an account with that name already exists' + color.END)
                             else:
                                 break
-                        os.rename(db_dir + 'main_botdr.db', db_dir + str(new_account_name) + '.db')
+                        log_status = logging()
                         config.set("Settings", "accounts status", "on")
+                        if log_status == 'on':
+                            log = open(log_file, 'a')
+                            log.write('INFO: Multi Account Activation: ' + str(datetime.now()) + '\n')
+                            log.write('INFO: Exit: ' + str(datetime.now()) + '\n')
+                            log.close()
+                        os.rename(db_dir + 'main_botdr.db', db_dir + str(new_account_name) + '.db')
+                        os.rename(db_dir + 'main_botdr.log', db_dir + str(new_account_name) + '.log')
+                        x1 = os.path.isfile(db_dir + 'main_botdr.log')
+                        if x1:
+                            os.remove(db_dir + 'main_botdr.log')
                     elif accounts_status == 'on':
                         clearScr()
                         print(botdrlogo)
                         print(dec(color.RED + 'Accounts status' + color.END))
                         while True:
-                            new_account_name = input(color.OKBLUE + 'choose which account to make the main: ' + color.END)
-                            x1 = os.path.isfile(new_account_name)
-                            if new_account_name == "Q":
-                                main()
-                            elif len(new_account_name) == 0 or x1 == False:
-                                print(color.RED + 'account not found' + color.END)
+                            try:
+                                account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
+                                if account_pass == "Q":
+                                    main()                            
+                                ph.verify(ac, account_pass)
+                            except exceptions.VerifyMismatchError:
+                                print(color.RED + 'Wrong password' + color.END)
                             else:
+                                account_pass = ''
                                 break
-                        os.rename(db_dir + str(new_account_name) + '.db', db_dir + 'main_botdr.db')
                         config.set("Settings", "accounts status", "off")
-                    with open(path, "w") as config_file:
-                        config.write(config_file)
-                    config_file.close()
-                    main()
-                elif uc == '2':
-                    if log_status == 'off':
-                        config.set("Settings", "log status", "on")
-                    elif log_status == 'on':
-                        config.set("Settings", "log status", "off")
+                        if log_status == 'on':
+                            log = open(log_file, 'a')
+                            log.write('INFO: Multi Account Deactivation: ' + str(datetime.now()) + '\n')
+                            log.write('INFO: Exit: ' + str(datetime.now()) + '\n')
+                            log.close()
+                        os.rename(db_dir + str(account_name) + '.db', db_dir + 'main_botdr.db')
+                        os.rename(db_dir + str(account_name) + '.log', db_dir + 'main_botdr.log')
+                        x1 = os.path.isfile(db_dir + str(account_name) + '.log')
+                        if x1:
+                            os.remove(db_dir + str(account_name) + '.log')
                     with open(path, "w") as config_file:
                         config.write(config_file)
                     config_file.close()
                     break
+                elif uc == '2':
+                    if log_status == 'off':
+                        clearScr()
+                        print(botdrlogo)
+                        print(dec(color.RED + 'on logging' + color.END))
+                        while True:
+                            try:
+                                account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
+                                if account_pass == "Q":
+                                    main()                            
+                                ph.verify(ac, account_pass)
+                            except exceptions.VerifyMismatchError:
+                                print(color.RED + 'Wrong password' + color.END)
+                            else:
+                                if log_status == 'on':
+                                    log = open(log_file, 'a')
+                                    log.write('INFO: Logging is enabled: ' + str(datetime.now()) + '\n')
+                                    log.close()
+                                cursor.execute("""UPDATE settings SET log = ('on') """)
+                                conn.commit()
+                                account_pass = ''
+                                break
+                    elif log_status == 'on':
+                        clearScr()
+                        print(botdrlogo)
+                        print(dec(color.RED + 'off logging' + color.END))
+                        while True:
+                            try:
+                                account_pass = getpass.getpass(color.OKBLUE + 'Enter password: ' + color.END)
+                                if account_pass == "Q":
+                                    main()                            
+                                ph.verify(ac, account_pass)
+                            except exceptions.VerifyMismatchError:
+                                print(color.RED + 'Wrong password' + color.END)
+                            else:
+                                if log_status == 'on':
+                                    log = open(log_file, 'a')
+                                    log.write('INFO: Logging is disabled: ' + str(datetime.now()) + '\n')
+                                    log.close()
+                                cursor.execute("""UPDATE settings SET log = ('off') """)
+                                conn.commit()
+                                account_pass = ''
+                                break
+                    with open(path, "w") as config_file:
+                        config.write(config_file)
+                    config_file.close()
+                    main()
                 elif uc == '3':
                     clearScr()
                     print(botdrlogo)
                     print(dec(color.RED + 'Info' + color.END))
-                    print(color.OKGREEN + 'version: ' + color.END + '1.4.2')
+                    print(color.OKGREEN + 'version: ' + color.END + '1.5')
                     print(color.OKGREEN + 'license: ' + color.END + 'Apache License Version 2.0')
                     print(color.OKGREEN + 'author: ' + color.END + 'botfg76')
                     print(color.OKGREEN + 'author email: ' + color.END + 'botfgbartenevfgzero76@gmail.com')
@@ -1237,19 +1342,15 @@ def main() -> None:
                         if uc_name == 'Q':
                             break
                 elif uc == 'Q':
-                    main()
-                    break    
-                break
+                    main()    
+            clearScr()
+            sys.exit()    
     elif usercomand == 'Q':  # Q-exit
-        cursor.close()
-        path = (db_dir + "botdr.ini")
-        config = configparser.ConfigParser()
-        config.read(path)
-        log_status = config.get("Settings", "log status")
+        log_status = logging()
         if log_status == 'on':
             log = open(log_file, 'a')
             log.write('INFO: Exit: ' + str(datetime.now()) + '\n')
-        log.close()
+            log.close()
         clearScr()
         sys.exit()
     else:
@@ -1257,17 +1358,15 @@ def main() -> None:
 
 
 def super_main():
+    global log_file
     path = (db_dir + "botdr.ini")
     if not os.path.exists(path):
         createConfig(path)
     vhod()
-    path = (db_dir + "botdr.ini")
-    config = configparser.ConfigParser()
-    config.read(path)
-    log_status = config.get("Settings", "log status")
+    log_status = logging()
     if log_status == 'on':
         log = open(log_file, 'a')
-        log.write('INFO: Entrance: ' + str(datetime.now()) + '\n')
+        log.write('INFO: Run app: ' + str(datetime.now()) + '\n')
         log.close()
     main()
 
