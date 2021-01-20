@@ -16,8 +16,8 @@ setup(
     packages=find_packages(),
     install_requires=[
         'pysqlcipher3==1.0.3',
-        'numpy==1.17.4',
-        'pyAesCrypt==0.4.3'],
+        'numpy==1.19.5',
+        'pyAesCrypt==0.4.4'],
     entry_points={
         'console_scripts':
             ['BotDr = BotDr.BotDr:super_main']
