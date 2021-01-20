@@ -8,9 +8,9 @@
 
 ### Requirements
 ------------
-Need to install system libraries: sqlcipher libsqlcipher0 libsqlcipher-dev
+Need to install system libraries: sqlcipher libsqlcipher0 libsqlcipher-dev python3-numpy 
 ```bash
-sudo apt install sqlcipher libsqlcipher0 libsqlcipher-dev
+sudo apt install sqlcipher libsqlcipher0 libsqlcipher-dev python3-numpy 
 ```
 
 ### Installation [Linux](https://wikipedia.org/wiki/Linux) [![alt tag](http://icons.iconarchive.com/icons/dakirby309/simply-styled/32/OS-Linux-icon.png)](https://wikipedia.org/wiki/Linux)
