@@ -12,7 +12,7 @@ Need to install system libraries: sqlcipher libsqlcipher0 libsqlcipher-dev pytho
 
 
 ```bash
-sudo apt install sqlcipher libsqlcipher0 libsqlcipher-dev python3-numpy; pip3 install pysqlcipher3; pip3 install pyAesCrypt; pip install argon2-cffi
+sudo apt install sqlcipher libsqlcipher0 libsqlcipher-dev python3-numpy; pip3 install pysqlcipher3; pip3 install pyAesCrypt; pip3 install argon2-cffi
 ```
 
 ### Installation [Linux](https://wikipedia.org/wiki/Linux) [![alt tag](http://icons.iconarchive.com/icons/dakirby309/simply-styled/32/OS-Linux-icon.png)](https://wikipedia.org/wiki/Linux)
