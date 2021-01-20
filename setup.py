@@ -14,10 +14,6 @@ setup(
     long_description=open(join(dirname(__file__), 'README.txt')).read(),
     version=BotDr.__version__,
     packages=find_packages(),
-    install_requires=[
-        'pysqlcipher3==1.0.3',
-        'numpy==1.19.5',
-        'pyAesCrypt==0.4.4'],
     entry_points={
         'console_scripts':
             ['BotDr = BotDr.BotDr:super_main']
